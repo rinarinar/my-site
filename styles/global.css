@@ -1,0 +1,106 @@
+/* ===== MUJI 简约风格 CSS ===== */
+
+/* 页面整体 */
+body {
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  background-color: #fafafa; /* 米白背景 */
+  color: #333; /* 深灰文字 */
+  line-height: 1.8;
+  margin: 0;
+  padding: 0;
+}
+
+/* 页面容器 */
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+  background: #fff; /* 白色内容背景 */
+  border: 1px solid #e0e0e0; /* 浅灰边框 */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* 标题 */
+h1, h2, h3 {
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: #111;
+}
+
+h1 {
+  font-size: 28px;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 10px;
+}
+
+h2 {
+  font-size: 22px;
+  margin-top: 30px;
+  border-left: 4px solid #ccc;
+  padding-left: 10px;
+}
+
+h3 {
+  font-size: 18px;
+  margin-top: 20px;
+}
+
+/* 段落与列表 */
+p {
+  margin: 8px 0;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+ul li {
+  margin: 6px 0;
+  padding-left: 16px;
+  position: relative;
+}
+
+ul li::before {
+  content: "–"; /* 短横线风格 */
+  position: absolute;
+  left: 0;
+  color: #999;
+}
+
+/* 头像 */
+.avatar {
+  display: block;
+  margin: 0 auto 20px auto;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  object-fit: cover;
+}
+
+/* 联系方式 */
+.contact {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* 分割线 */
+.divider {
+  border-top: 1px solid #eee;
+  margin: 30px 0;
+}
+
+/* 小标签（比如技能） */
+.tag {
+  display: inline-block;
+  background: #f0f0f0;
+  color: #555;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 13px;
+  margin: 4px 6px 4px 0;
+}
