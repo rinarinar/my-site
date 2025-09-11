@@ -51,8 +51,8 @@ export default function Navigation() {
             href="/answer-book" 
             style={{
               textDecoration: 'none',
-              color: router.pathname === '/daily-quote' ? '#007bff' : '#333',
-              fontWeight: router.pathname === '/daily-quote' ? '600' : '400',
+              color: router.pathname === '/answer-book' ? '#007bff' : '#333',
+              fontWeight: router.pathname === '/answer-book' ? '600' : '400',
               padding: '0.5rem 1rem',
               borderRadius: '5px',
               transition: 'all 0.3s ease'
