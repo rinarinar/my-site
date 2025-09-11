@@ -1,0 +1,210 @@
+/* styles/AnswerBook.module.css */
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-bottom: 1rem;
+  letter-spacing: -1px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #86868b;
+  margin-bottom: 2rem;
+}
+
+/* 书本样式 */
+.book {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(135deg, #fdf6e3 0%, #f5e5c6 100%);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  position: relative;
+  margin-bottom: 2rem;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.book::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to bottom, #d4a76a, #b38728);
+  border-radius: 20px 0 0 20px;
+}
+
+.answer {
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: #2c1810;
+  line-height: 1.6;
+  margin: 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease;
+}
+
+.answer.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 问题输入 */
+.questionInput {
+  width: 100%;
+  max-width: 400px;
+  padding: 1.2rem 1.5rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.questionInput:focus {
+  border-color: #0071e3;
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+}
+
+.questionInput::placeholder {
+  color: #86868b;
+}
+
+/* 按钮样式 */
+.askButton {
+  padding: 1.2rem 2.5rem;
+  background: linear-gradient(135deg, #0071e3, #0077ed);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+
+.askButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3);
+}
+
+.askButton:active {
+  transform: translateY(0);
+}
+
+.askButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.resetButton {
+  padding: 0.8rem 1.5rem;
+  background: transparent;
+  color: #86868b;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resetButton:hover {
+  background: #f5f5f7;
+  color: #1d1d1f;
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.thinking {
+  font-size: 1.2rem;
+  color: #86868b;
+  animation: pulse 2s infinite;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+  
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .book {
+    padding: 2rem 1.5rem;
+    min-height: 250px;
+  }
+  
+  .answer {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 2rem;
+  }
+  
+  .subtitle {
+    font-size: 1rem;
+  }
+  
+  .book {
+    padding: 1.5rem 1rem;
+  }
+  
+  .answer {
+    font-size: 1.3rem;
+  }
+  
+  .askButton {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+}
