@@ -1,0 +1,34 @@
+/* 每日一句特有样式 */
+.quoteContainer {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.quoteText {
+  font-size: 1.8rem;
+  font-style: italic;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.refreshButton {
+  padding: 0.8rem 2rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.refreshButton:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+}
+
+/* 其他每日一句特有样式... */
