@@ -1,4 +1,6 @@
 // pages/fortune.js
+import styles from '../styles/Fortune.module.css';
+
 export default function Fortune() {
   return (
     <div className="container">
