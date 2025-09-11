@@ -26,7 +26,7 @@ export default function Navigation() {
           fontWeight: 'bold',
           fontSize: '1.2rem'
         }}>
-          陈文的个人网站
+          Rina个人网站
         </Link>
         
         {/* 导航链接 */}
