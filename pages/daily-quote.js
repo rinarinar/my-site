@@ -6,18 +6,21 @@ export default function DailyQuote() {
   const [currentQuote, setCurrentQuote] = useState(null);
   const [showAll, setShowAll] = useState(false);
 
-  // 获取每日一句（基于日期）
-  const getDailyQuote = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const quoteForToday = dailyQuotes.find(q => q.date === today);
-    
-    // 如果没有今天的语录，随机选择一个
-    return quoteForToday || dailyQuotes[Math.floor(Math.random() * dailyQuotes.length)];
+  // 直接定义获取随机语录的函数
+  const getRandomQuote = () => {
+    return dailyQuotes[Math.floor(Math.random() * dailyQuotes.length)];
   };
 
   useEffect(() => {
-    setCurrentQuote(getDailyQuote());
+    // 初始加载时获取语录
+    const today = new Date().toISOString().split('T')[0];
+    const quoteForToday = dailyQuotes.find(q => q.date === today);
+    setCurrentQuote(quoteForToday || getRandomQuote());
   }, []);
+
+  const handleRefresh = () => {
+    setCurrentQuote(getRandomQuote());
+  };
 
   if (!currentQuote) {
     return (
@@ -74,7 +77,7 @@ export default function DailyQuote() {
       {/* 刷新按钮 */}
       <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
         <button
-          onClick={() => setCurrentQuote(getDailyQuote())}
+          onClick={handleRefresh}
           style={{
             padding: '0.8rem 2rem',
             background: '#007bff',
