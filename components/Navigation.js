@@ -57,12 +57,10 @@ export default function Navigation() {
               borderRadius: '5px',
               transition: 'all 0.3s ease'
             }}
-            onMouseOver={(e) => e.target.style.background = '#f8f9fa'}
-            onMouseOut={(e) => e.target.style.background = 'transparent'}
           >
-            每日一句
+            答案之书
           </Link>
-          
+              
           <Link 
             href="/fortune" 
             style={{
