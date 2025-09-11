@@ -1,6 +1,8 @@
+
 // pages/daily-quote.js
 import { dailyQuotes } from '../data/quotes';
 import { useState, useEffect } from 'react';
+import styles from '../styles/DailyQuote.module.css';
 
 export default function DailyQuote() {
   const [currentQuote, setCurrentQuote] = useState(null);
