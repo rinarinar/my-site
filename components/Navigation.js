@@ -48,7 +48,7 @@ export default function Navigation() {
           </Link>
           
           <Link 
-            href="/daily-quote" 
+            href="/answer-book" 
             style={{
               textDecoration: 'none',
               color: router.pathname === '/daily-quote' ? '#007bff' : '#333',
