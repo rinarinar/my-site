@@ -313,3 +313,33 @@ body {
   background: #007bff;
   color: white;
 }
+
+/* 导航样式 */
+.nav-link {
+  text-decoration: none;
+  color: #333;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  background: #f8f9fa;
+}
+
+.nav-link.active {
+  color: #007bff;
+  font-weight: 600;
+}
+
+/* 移动端导航响应式 */
+@media (max-width: 768px) {
+  .nav-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .nav-links {
+    gap: 1rem;
+  }
+}
