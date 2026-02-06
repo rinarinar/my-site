@@ -76,6 +76,22 @@ export default function Navigation() {
           >
             算命
           </Link>
+
+          <Link 
+            href="/stock" 
+            style={{
+              textDecoration: 'none',
+              color: router.pathname === '/stock' ? '#007bff' : '#333',
+              fontWeight: router.pathname === '/stock' ? '600' : '400',
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => e.target.style.background = '#f8f9fa'}
+            onMouseOut={(e) => e.target.style.background = 'transparent'}
+          >
+            炒股
+          </Link>
         </div>
       </div>
     </nav>

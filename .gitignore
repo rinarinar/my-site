@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+
+# misc
+.DS_Store
+*.pem
+.env*.local

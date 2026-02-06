@@ -12,7 +12,7 @@ export default function App({ Component, pageProps }) {
           rel="stylesheet"
         />
         <title>陈文的个人网站</title>
-        <meta name="description" content="陈文的个人简历、每日一句和算命功能" />
+        <meta name="description" content="陈文的个人简历、答案之书、算命与炒股（开盘收盘价）" />
       </Head>
       <Navigation />
       <Component {...pageProps} />
