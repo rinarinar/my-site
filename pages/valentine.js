@@ -1,12 +1,13 @@
-// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 挥动/点击 → 揭晓 → 爱心结果页
+// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 手指晃动约1s → 揭晓 → 爱心结果页
 import Head from 'next/head';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/Valentine.module.css';
 
-const MOTION_SAMPLE_MS = 150;
-const MOTION_THRESHOLD = 0.015;
-const MOTION_FRAMES_REQUIRED = 4;
 const REVEAL_DURATION_MS = 2200;
+// 手指晃动检测：采样间隔(ms)、满 1 秒的采样数、判定为「晃动」的位移阈值(归一化 0~1)
+const HAND_SAMPLE_MS = 50;
+const HAND_WAVE_DURATION_SAMPLES = 20;   // 20 * 50ms = 1s
+const HAND_WAVE_MOVEMENT_THRESHOLD = 0.12; // 1 秒内手指水平位移范围超过此值视为晃动
 
 function Valentine() {
   const [phase, setPhase] = useState('name'); // 'name' | 'cards' | 'reveal' | 'result'
@@ -14,17 +15,18 @@ function Valentine() {
   const [chosenCardIndex, setChosenCardIndex] = useState(null);
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [triggered, setTriggered] = useState(false);
+  const [handReady, setHandReady] = useState(false);
 
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
   const streamRef = useRef(null);
-  const intervalRef = useRef(null);
-  const lastFrameRef = useRef(null);
-  const motionCountRef = useRef(0);
-  const lastImageDataRef = useRef(null);
+  const handLandmarkerRef = useRef(null);
+  const positionBufferRef = useRef([]);
+  const tickRef = useRef(null);
+  const triggeredRef = useRef(false);
 
   const startDraw = useCallback(() => {
-    if (phase !== 'cards' || triggered) return;
+    if (phase !== 'cards' || triggeredRef.current) return;
+    triggeredRef.current = true;
     setTriggered(true);
     const chosen = Math.floor(Math.random() * 3);
     setChosenCardIndex(chosen);
@@ -37,6 +39,7 @@ function Valentine() {
     const name = (username || '').trim() || '你';
     setUsername(name);
     setPhase('cards');
+    triggeredRef.current = false;
     setTriggered(false);
     setChosenCardIndex(null);
   };
@@ -66,10 +69,6 @@ function Valentine() {
         streamRef.current = null;
       }
       setCameraAllowed(false);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      lastFrameRef.current = null;
-      lastImageDataRef.current = null;
-      motionCountRef.current = 0;
     };
   }, [phase]);
 
@@ -78,54 +77,107 @@ function Valentine() {
     videoRef.current.srcObject = streamRef.current;
   }, [phase, cameraAllowed]);
 
-  // 简单运动检测：定时取帧，与上一帧做亮度差
+  // 加载 MediaPipe 手部识别（仅 cards 阶段且摄像头已开）
   useEffect(() => {
-    if (phase !== 'cards' || !cameraAllowed || !videoRef.current || !canvasRef.current || triggered) return;
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const sample = () => {
-      if (!video.videoWidth || triggered) return;
-      const w = Math.min(64, video.videoWidth);
-      const h = Math.min(48, video.videoHeight);
-      canvas.width = w;
-      canvas.height = h;
-      ctx.drawImage(video, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const data = imageData.data;
-      const prev = lastImageDataRef.current;
-      lastImageDataRef.current = imageData;
-
-      if (prev && prev.data.length === data.length) {
-        let sum = 0;
-        const step = 4 * 2;
-        for (let i = 0; i < data.length; i += step) {
-          const r = data[i], g = data[i + 1], b = data[i + 2];
-          const pr = prev.data[i], pg = prev.data[i + 1], pb = prev.data[i + 2];
-          const brightness = (r + g + b) / 3 / 255;
-          const pBrightness = (pr + pg + pb) / 3 / 255;
-          sum += Math.abs(brightness - pBrightness);
-        }
-        const diff = sum / (data.length / step);
-        if (diff > MOTION_THRESHOLD) {
-          motionCountRef.current += 1;
-          if (motionCountRef.current >= MOTION_FRAMES_REQUIRED) {
-            motionCountRef.current = 0;
-            startDraw();
-          }
-        } else {
-          motionCountRef.current = 0;
-        }
+    if (phase !== 'cards' || !cameraAllowed) return;
+    let cancelled = false;
+    const initHand = async () => {
+      try {
+        const { HandLandmarker, FilesetResolver } = await import('@mediapipe/tasks-vision');
+        if (cancelled) return;
+        const vision = await FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm'
+        );
+        if (cancelled) return;
+        const handLandmarker = await HandLandmarker.createFromOptions(vision, {
+          baseOptions: {
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+          },
+          numHands: 1,
+          runningMode: 'VIDEO',
+        });
+        if (cancelled) return;
+        handLandmarkerRef.current = handLandmarker;
+        setHandReady(true);
+      } catch (e) {
+        if (!cancelled) setHandReady(false);
       }
     };
-
-    intervalRef.current = setInterval(sample, MOTION_SAMPLE_MS);
+    initHand();
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      cancelled = true;
+      handLandmarkerRef.current = null;
+      setHandReady(false);
     };
-  }, [phase, cameraAllowed, triggered, startDraw]);
+  }, [phase, cameraAllowed]);
+
+  // 手指晃动检测：有人手且食指指尖在约 1 秒内晃动超过阈值则触发抽卡
+  useEffect(() => {
+    if (phase !== 'cards' || !cameraAllowed || !videoRef.current || !handReady || triggeredRef.current) return;
+    const video = videoRef.current;
+    const landmarker = handLandmarkerRef.current;
+    if (!landmarker) return;
+
+    let lastSampleTime = 0;
+    const detect = (timestamp) => {
+      if (triggeredRef.current) return;
+      if (!video.videoWidth) {
+        tickRef.current = requestAnimationFrame(detect);
+        return;
+      }
+      const now = Date.now();
+      if (now - lastSampleTime < HAND_SAMPLE_MS) {
+        tickRef.current = requestAnimationFrame(detect);
+        return;
+      }
+      lastSampleTime = now;
+
+      try {
+        const result = landmarker.detectForVideo(video, Math.round(timestamp));
+        const landmarks = result?.landmarks?.[0];
+        if (landmarks && landmarks.length >= 9) {
+          // 食指指尖 landmark index 8
+          const indexTip = landmarks[8];
+          const x = indexTip.x;
+          const y = indexTip.y;
+          const buf = positionBufferRef.current;
+          buf.push({ x, y });
+          if (buf.length > HAND_WAVE_DURATION_SAMPLES) buf.shift();
+          if (buf.length === HAND_WAVE_DURATION_SAMPLES) {
+            let minX = buf[0].x, maxX = buf[0].x;
+            let minY = buf[0].y, maxY = buf[0].y;
+            for (let i = 1; i < buf.length; i++) {
+              minX = Math.min(minX, buf[i].x);
+              maxX = Math.max(maxX, buf[i].x);
+              minY = Math.min(minY, buf[i].y);
+              maxY = Math.max(maxY, buf[i].y);
+            }
+            const rangeX = maxX - minX;
+            const rangeY = maxY - minY;
+            if (rangeX >= HAND_WAVE_MOVEMENT_THRESHOLD || rangeY >= HAND_WAVE_MOVEMENT_THRESHOLD) {
+              positionBufferRef.current = [];
+              startDraw();
+            }
+          }
+        } else {
+          positionBufferRef.current = [];
+        }
+      } catch (_) {}
+
+      tickRef.current = requestAnimationFrame(detect);
+    };
+
+    const start = () => {
+      if (video.videoWidth) tickRef.current = requestAnimationFrame(detect);
+      else video.addEventListener('loadeddata', () => { tickRef.current = requestAnimationFrame(detect); }, { once: true });
+    };
+    const t = setTimeout(start, 500);
+    return () => {
+      clearTimeout(t);
+      if (tickRef.current) cancelAnimationFrame(tickRef.current);
+      positionBufferRef.current = [];
+    };
+  }, [phase, cameraAllowed, handReady, startDraw]);
 
   const displayName = (username || '').trim() || '你';
 
@@ -181,9 +233,10 @@ function Valentine() {
                     <video ref={videoRef} autoPlay muted playsInline className={styles.video} />
                   )}
                   {!cameraAllowed && <span className={styles.cameraPlaceholder}>摄像头未开启或已拒绝</span>}
-                  <canvas ref={canvasRef} className={styles.canvasHidden} width={64} height={48} />
                 </div>
-                <p className={styles.instruction}>对着摄像头舞动魔杖（或手指），或点击下方按钮</p>
+                <p className={styles.instruction}>
+                  {handReady ? '把手伸入画面，手指晃动约 1 秒后自动抽卡' : '正在加载手势识别…'}
+                </p>
                 <button type="button" className={styles.btnWand} onClick={startDraw}>
                   或点击此处挥动魔杖
                 </button>
