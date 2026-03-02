@@ -1,13 +1,13 @@
-// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 手指晃动约1s → 揭晓 → 爱心结果页
+// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 手指晃动约3s → 揭晓 → 爱心结果页
 import Head from 'next/head';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/Valentine.module.css';
 
-const REVEAL_DURATION_MS = 2200;
-// 手指晃动检测：采样间隔(ms)、满 1 秒的采样数、判定为「晃动」的位移阈值(归一化 0~1)
+const REVEAL_DURATION_MS = 4400; // 揭晓动画放慢 2 倍 (原 2200)
+// 手指晃动检测：采样间隔(ms)、满 3 秒的采样数、判定为「晃动」的位移阈值(归一化 0~1)
 const HAND_SAMPLE_MS = 50;
-const HAND_WAVE_DURATION_SAMPLES = 20;   // 20 * 50ms = 1s
-const HAND_WAVE_MOVEMENT_THRESHOLD = 0.12; // 1 秒内手指水平位移范围超过此值视为晃动
+const HAND_WAVE_DURATION_SAMPLES = 60;   // 60 * 50ms = 3s
+const HAND_WAVE_MOVEMENT_THRESHOLD = 0.12; // 3 秒内手指水平位移范围超过此值视为晃动
 
 function Valentine() {
   const [phase, setPhase] = useState('name'); // 'name' | 'cards' | 'reveal' | 'result'
@@ -235,7 +235,7 @@ function Valentine() {
                   {!cameraAllowed && <span className={styles.cameraPlaceholder}>摄像头未开启或已拒绝</span>}
                 </div>
                 <p className={styles.instruction}>
-                  {handReady ? '把手伸入画面，手指晃动约 1 秒后自动抽卡' : '正在加载手势识别…'}
+                  {handReady ? '把手伸入画面，手指晃动约 3 秒后自动抽卡' : '正在加载手势识别…'}
                 </p>
                 <button type="button" className={styles.btnWand} onClick={startDraw}>
                   或点击此处挥动魔杖
