@@ -106,7 +106,7 @@ export default function Navigation() {
             onMouseOver={(e) => e.target.style.background = '#f8f9fa'}
             onMouseOut={(e) => e.target.style.background = 'transparent'}
           >
-            💌
+            塔罗牌
           </Link>
         </div>
       </div>

@@ -1,4 +1,4 @@
-/* styles/Valentine.module.css — 💌 情人节抽卡 · 简约素色 + 塔罗卡背 + 水晶抽卡动画 */
+/* styles/Valentine.module.css — 塔罗牌 · 弧形牌面 + 手指指牌抬起 + 固定3s确认 */
 
 .wrap {
   min-height: 100vh;
@@ -73,25 +73,42 @@
   transform: translateY(-1px);
 }
 
-/* ========== 步骤 2 & 4：三张卡（占 50vh）+ 摄像头 ========== */
+/* ========== 弧形牌面（魔术师摊牌式）+ 摄像头 ========== */
 .stepCards {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
   width: 100%;
-  max-width: 960px;
+  max-width: 100%;
 }
 
-.cardsRow {
+/* 一副牌弧形展开，背面向上 */
+.cardsArc {
   display: flex;
-  gap: clamp(0.75rem, 2vw, 1.5rem);
   justify-content: center;
-  align-items: center;
-  height: 50vh;
-  min-height: 200px;
+  align-items: flex-end;
+  gap: clamp(-1.25rem, -3vw, -0.5rem);
+  padding: 0 0.5rem;
+  min-height: 38vh;
+  max-width: 100%;
+}
+
+.arcCard {
+  width: clamp(52px, 11vw, 80px);
+  aspect-ratio: 2 / 3;
+  perspective: 600px;
+  transition: transform 0.35s ease, opacity 0.5s ease, filter 0.3s ease;
+  transform: rotate(calc((var(--arc-i) - 3) * 11deg)) translateY(calc((var(--arc-i) - 3) * (var(--arc-i) - 3) * 2px));
+}
+
+/* 手指指向时微微抬起，像魔术师提起让用户确认 */
+.arcCard.cardLifted {
+  transform: rotate(calc((var(--arc-i) - 3) * 11deg)) translateY(calc((var(--arc-i) - 3) * (var(--arc-i) - 3) * 2px - 22px)) scale(1.08);
+  z-index: 2;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.2));
 }
 
 .card {
@@ -107,6 +124,12 @@
   opacity: 0.35;
   transform: scale(0.88);
   filter: saturate(0.6);
+}
+
+.arcCard.cardFaded {
+  opacity: 0.4;
+  transform: rotate(calc((var(--arc-i) - 3) * 11deg)) translateY(calc((var(--arc-i) - 3) * (var(--arc-i) - 3) * 2px));
+  filter: saturate(0.7);
 }
 
 .cardRevealing {
@@ -207,6 +230,22 @@
 .cardHeart {
   font-size: clamp(2rem, 5vw, 3rem);
   opacity: 0.92;
+}
+
+.cardFace {
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardSymbol {
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  color: #8b7355;
+}
+
+.cardLabel {
+  font-size: 0.65em;
+  color: #6b5b4f;
+  letter-spacing: 0.15em;
 }
 
 /* 揭晓时：光束罩 + 粒子（水晶感） */
@@ -407,8 +446,15 @@
   font-size: clamp(1.15rem, 3vw, 1.5rem);
   font-weight: 600;
   color: #3d3d3d;
+  margin: 0 0 0.35rem;
+  line-height: 1.4;
+}
+
+.resultSub {
+  font-size: 0.9rem;
+  color: #6b6b6b;
   margin: 0;
-  line-height: 1.5;
+  letter-spacing: 0.08em;
 }
 
 .btnAgain {
