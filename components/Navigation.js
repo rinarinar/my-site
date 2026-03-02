@@ -44,7 +44,7 @@ export default function Navigation() {
             onMouseOver={(e) => e.target.style.background = '#f8f9fa'}
             onMouseOut={(e) => e.target.style.background = 'transparent'}
           >
-            简历
+            首页
           </Link>
           
           <Link 
@@ -91,6 +91,22 @@ export default function Navigation() {
             onMouseOut={(e) => e.target.style.background = 'transparent'}
           >
             炒股
+          </Link>
+
+          <Link 
+            href="/valentine" 
+            style={{
+              textDecoration: 'none',
+              color: router.pathname === '/valentine' ? '#007bff' : '#333',
+              fontWeight: router.pathname === '/valentine' ? '600' : '400',
+              padding: '0.5rem 1rem',
+              borderRadius: '5px',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseOver={(e) => e.target.style.background = '#f8f9fa'}
+            onMouseOut={(e) => e.target.style.background = 'transparent'}
+          >
+            💌
           </Link>
         </div>
       </div>
