@@ -256,11 +256,14 @@ function Valentine() {
               </>
             )}
             {phase === 'reveal' && (
-              <div className={styles.heartsFloating} aria-hidden="true">
-                {[...Array(12)].map((_, i) => (
-                  <span key={i} className={styles.floatHeart} style={{ '--i': i }}>❤</span>
-                ))}
-              </div>
+              <>
+                <div className={styles.revealBeam} aria-hidden="true" />
+                <div className={styles.heartsFloating} aria-hidden="true">
+                  {[...Array(16)].map((_, i) => (
+                    <span key={i} className={styles.floatHeart} style={{ '--i': i }}>✦</span>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}

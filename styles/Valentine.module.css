@@ -1,8 +1,8 @@
-/* styles/Valentine.module.css — 💌 情人节抽卡 */
+/* styles/Valentine.module.css — 💌 情人节抽卡 · 简约素色 + 塔罗卡背 + 水晶抽卡动画 */
 
 .wrap {
   min-height: 100vh;
-  background: linear-gradient(160deg, #2d0a1a 0%, #4a1530 40%, #1a0a14 100%);
+  background: #f0efeb;
   padding: 2rem;
   display: flex;
   align-items: center;
@@ -11,16 +11,7 @@
   overflow: hidden;
 }
 
-.wrap::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 30% 20%, rgba(255, 105, 180, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 70% 80%, rgba(255, 182, 193, 0.1) 0%, transparent 40%);
-  pointer-events: none;
-}
-
-/* ========== 步骤 1：输入名字 ========== */
+/* ========== 步骤 1：输入名字（简约） ========== */
 .stepName {
   position: relative;
   z-index: 1;
@@ -30,60 +21,59 @@
 }
 
 .title {
-  font-size: clamp(1.5rem, 4vw, 2.2rem);
-  font-weight: 700;
-  color: #fff;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 600;
+  color: #2c2c2c;
   margin-bottom: 0.5rem;
-  text-shadow: 0 0 20px rgba(255, 182, 193, 0.4);
+  letter-spacing: 0.02em;
 }
 
 .hint {
-  font-size: 1rem;
-  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  color: #6b6b6b;
   margin-bottom: 1.5rem;
 }
 
 .input {
   width: 100%;
   padding: 1rem 1.25rem;
-  font-size: 1.1rem;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  font-size: 1rem;
+  border: 1px solid #d8d6d2;
+  border-radius: 10px;
+  background: #fff;
+  color: #2c2c2c;
   margin-bottom: 1rem;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: #9a9a9a;
 }
 
 .input:focus {
-  border-color: #ff69b4;
-  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.25);
+  border-color: #8b7355;
+  box-shadow: 0 0 0 2px rgba(139, 115, 85, 0.12);
 }
 
 .btnPrimary {
-  padding: 1rem 2.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  padding: 0.9rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
   color: #fff;
-  background: linear-gradient(145deg, #e91e63 0%, #ad1457 100%);
+  background: #6b5b4f;
   border: none;
-  border-radius: 999px;
+  border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 6px 24px rgba(233, 30, 99, 0.4);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .btnPrimary:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 28px rgba(233, 30, 99, 0.5);
+  background: #5a4d43;
+  transform: translateY(-1px);
 }
 
-/* ========== 步骤 2 & 4：三张卡 + 摄像头 ========== */
+/* ========== 步骤 2 & 4：三张卡（占 50vh）+ 摄像头 ========== */
 .stepCards {
   position: relative;
   z-index: 1;
@@ -92,42 +82,69 @@
   align-items: center;
   gap: 1.5rem;
   width: 100%;
-  max-width: 720px;
+  max-width: 960px;
 }
 
 .cardsRow {
   display: flex;
-  gap: 1rem;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
   justify-content: center;
-  flex-wrap: wrap;
+  align-items: center;
+  height: 50vh;
+  min-height: 200px;
 }
 
 .card {
-  width: 120px;
-  height: 160px;
-  perspective: 400px;
-  transition: transform 0.8s ease, opacity 0.8s ease;
+  height: 100%;
+  width: auto;
+  aspect-ratio: 2 / 3;
+  max-width: calc((100vw - 4rem) / 3 - 1rem);
+  perspective: 800px;
+  transition: transform 0.6s ease, opacity 0.6s ease;
 }
 
 .cardFaded {
-  opacity: 0.4;
-  transform: scale(0.92);
+  opacity: 0.35;
+  transform: scale(0.88);
+  filter: saturate(0.6);
+}
+
+.cardRevealing {
+  z-index: 5;
+  animation: crystalReveal 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .cardRevealing .cardInner {
   transform: rotateY(180deg);
+  transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1) 0.4s;
 }
 
-.cardRevealing {
-  transform: scale(1.12);
-  z-index: 2;
-  animation: cardGlow 1.2s ease-out;
-}
-
-@keyframes cardGlow {
-  0% { filter: drop-shadow(0 0 0 rgba(255, 105, 180, 0)); }
-  50% { filter: drop-shadow(0 0 20px rgba(255, 105, 180, 0.8)); }
-  100% { filter: drop-shadow(0 0 12px rgba(255, 105, 180, 0.5)); }
+/* 王者荣耀水晶抽奖风格：光束 + 放大 + 光晕 + 粒子感 */
+@keyframes crystalReveal {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+  }
+  15% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)) drop-shadow(0 0 30px rgba(255, 200, 100, 0.4));
+  }
+  30% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.9)) drop-shadow(0 0 50px rgba(255, 180, 50, 0.6));
+  }
+  50% {
+    transform: scale(1.22);
+    filter: drop-shadow(0 0 30px rgba(255, 220, 150, 0.95)) drop-shadow(0 0 60px rgba(255, 200, 100, 0.5));
+  }
+  70% {
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.7)) drop-shadow(0 0 45px rgba(255, 190, 80, 0.4));
+  }
+  100% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 20px rgba(255, 210, 120, 0.5)) drop-shadow(0 4px 20px rgba(0, 0, 0, 0.2));
+  }
 }
 
 .cardInner {
@@ -135,7 +152,7 @@
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 1.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform 0.1s;
 }
 
 .cardBack,
@@ -147,41 +164,115 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 
+/* 塔罗牌背面风格：深色底 + 金边 + 中心纹样 */
 .cardBack {
-  background: linear-gradient(145deg, #8b1538 0%, #5c0e24 50%, #3d0a18 100%);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: linear-gradient(165deg, #1a1625 0%, #2d2438 45%, #1f1a28 100%);
+  border: 3px solid #8b7355;
+  box-shadow:
+    inset 0 0 0 1px rgba(200, 180, 140, 0.25),
+    0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.cardBack::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border: 1px solid rgba(180, 160, 120, 0.5);
+  border-radius: 8px;
+  pointer-events: none;
 }
 
 .cardBack::after {
-  content: '💌';
-  font-size: 2rem;
-  opacity: 0.9;
+  content: '✦';
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: rgba(200, 180, 140, 0.85);
+  letter-spacing: 0.2em;
+  text-shadow: 0 0 20px rgba(200, 180, 140, 0.3);
 }
 
 .cardFace {
   transform: rotateY(180deg);
-  background: linear-gradient(180deg, #fff5f8 0%, #ffe4ec 100%);
-  border: 2px solid rgba(233, 30, 99, 0.3);
+  background: linear-gradient(180deg, #fffaf8 0%, #fdf0ed 50%, #fce8e4 100%);
+  border: 2px solid rgba(180, 140, 120, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
-.cardFace1 { background: linear-gradient(180deg, #fff0f5 0%, #ffd6e3 100%); }
-.cardFace2 { background: linear-gradient(180deg, #ffe4ec 0%, #ffc0cb 100%); }
-.cardFace3 { background: linear-gradient(180deg, #ffd6e3 0%, #ffb6c1 100%); }
+.cardFace1 { background: linear-gradient(180deg, #fff9f8 0%, #fdeeeb 100%); }
+.cardFace2 { background: linear-gradient(180deg, #fdf4f2 0%, #fce6e2 100%); }
+.cardFace3 { background: linear-gradient(180deg, #fceeec 0%, #fadcd8 100%); }
 
 .cardHeart {
-  font-size: 2.5rem;
+  font-size: clamp(2rem, 5vw, 3rem);
+  opacity: 0.92;
+}
+
+/* 揭晓时：光束罩 + 粒子（水晶感） */
+.revealBeam {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 45%,
+    rgba(255, 230, 180, 0.25) 0%,
+    rgba(255, 210, 140, 0.08) 35%,
+    transparent 65%
+  );
+  animation: beamFade 2s ease-out forwards;
+}
+
+@keyframes beamFade {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+.heartsFloating {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.floatHeart {
+  position: absolute;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  opacity: 0;
+  animation: crystalFloat 2.5s ease-out forwards;
+  left: calc(15% + (var(--i) * 8%));
+  bottom: 20%;
+  animation-delay: calc(var(--i) * 0.06s);
+  color: #c9a86c;
+  text-shadow: 0 0 12px rgba(255, 220, 150, 0.8);
+}
+
+@keyframes crystalFloat {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(0);
+  }
+  15% {
+    opacity: 0.95;
+    transform: scale(1) translateY(-10px);
+  }
+  100% {
+    transform: scale(0.9) translateY(-80vh);
+    opacity: 0;
+  }
 }
 
 .cameraArea {
-  width: min(280px, 90vw);
+  width: min(260px, 85vw);
   aspect-ratio: 16 / 9;
-  border-radius: 12px;
+  border-radius: 10px;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.4);
-  border: 2px solid rgba(255, 182, 193, 0.4);
+  background: #2c2c2c;
+  border: 1px solid #d8d6d2;
   position: relative;
   display: flex;
   align-items: center;
@@ -195,7 +286,6 @@
   display: block;
 }
 
-/* 画面与真实方向一致：实际手指向右则画面里也向右，从而抽右卡 */
 .videoMirrorMatch {
   width: 100%;
   height: 100%;
@@ -206,45 +296,37 @@
 
 .cameraPlaceholder {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   text-align: center;
   padding: 1rem;
 }
 
-.canvasHidden {
-  position: absolute;
-  width: 0;
-  height: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .instruction {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1rem;
+  color: #5a5a5a;
+  font-size: 0.95rem;
   text-align: center;
   margin: 0;
 }
 
 .btnWand {
-  padding: 0.75rem 1.5rem;
-  font-size: 1rem;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 999px;
+  color: #5a5a5a;
+  background: #fff;
+  border: 1px solid #d8d6d2;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .btnWand:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.03);
+  background: #f5f5f3;
+  border-color: #8b7355;
+  color: #2c2c2c;
 }
 
-/* 识别到手指后画面中央弹出提示 */
+/* 识别到手指后中央提示（简约） */
 .handPromptOverlay {
   position: fixed;
   inset: 0;
@@ -252,116 +334,68 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   animation: promptFadeIn 0.3s ease-out;
 }
 
 .handPromptText {
-  max-width: min(90vw, 420px);
-  padding: 1.5rem 2rem;
+  max-width: min(90vw, 400px);
+  padding: 1.5rem 1.75rem;
   margin: 0;
-  font-size: clamp(1rem, 2.5vw, 1.25rem);
-  font-weight: 600;
-  color: #fff;
+  font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+  font-weight: 500;
+  color: #2c2c2c;
   text-align: center;
   line-height: 1.6;
-  background: linear-gradient(145deg, rgba(233, 30, 99, 0.95) 0%, rgba(173, 20, 87, 0.95) 100%);
-  border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e0ddd8;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 @keyframes promptFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* 揭晓时飘心形 */
-.heartsFloating {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.floatHeart {
-  position: absolute;
-  font-size: 1.25rem;
-  opacity: 0.9;
-  animation: floatUp 4s ease-in-out forwards;
-  left: calc(20% + (var(--i) * 6%));
-  bottom: -1rem;
-  animation-delay: calc(var(--i) * 0.16s);
-}
-
-@keyframes floatUp {
-  to {
-    transform: translateY(-100vh) scale(0.6);
-    opacity: 0;
-  }
-}
-
-/* ========== 步骤 5：爱心结果页 ========== */
+/* ========== 步骤 5：结果页（简约） ========== */
 .stepResult {
   position: relative;
   z-index: 1;
   text-align: center;
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
 }
 
-.stepResult::before {
-  content: '❤';
-  position: absolute;
-  font-size: 3rem;
-  opacity: 0.15;
-  top: 10%;
-  left: 15%;
-  animation: heartPulse 4s ease-in-out infinite;
-}
-
+.stepResult::before,
 .stepResult::after {
-  content: '❤';
-  position: absolute;
-  font-size: 2.5rem;
-  opacity: 0.12;
-  bottom: 25%;
-  right: 12%;
-  animation: heartPulse 4s ease-in-out infinite 1s;
-}
-
-@keyframes heartPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+  display: none;
 }
 
 .resultCard {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 240, 245, 0.98) 100%);
-  border: 3px solid rgba(233, 30, 99, 0.4);
-  border-radius: 20px;
-  padding: 2.5rem 2rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25), 0 0 40px rgba(255, 105, 180, 0.2);
-  margin-bottom: 1.5rem;
+  background: #fff;
+  border: 1px solid #e0ddd8;
+  border-radius: 16px;
+  padding: 2rem 1.75rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.25rem;
   position: relative;
-  animation: resultPop 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: resultPop 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .resultCard::before {
   content: '❤️';
   position: absolute;
-  top: -0.5rem;
+  top: -0.4rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 2rem;
+  font-size: 1.5rem;
 }
 
 @keyframes resultPop {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.94);
   }
   to {
     opacity: 1;
@@ -370,39 +404,40 @@
 }
 
 .resultText {
-  font-size: clamp(1.25rem, 3.5vw, 1.75rem);
-  font-weight: 700;
-  color: #ad1457;
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
+  font-weight: 600;
+  color: #3d3d3d;
   margin: 0;
   line-height: 1.5;
 }
 
 .btnAgain {
-  padding: 0.75rem 1.75rem;
-  font-size: 1rem;
+  padding: 0.65rem 1.5rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.25);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  border-radius: 999px;
+  color: #5a5a5a;
+  background: #fff;
+  border: 1px solid #d8d6d2;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .btnAgain:hover {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(255, 255, 255, 0.8);
+  background: #f5f5f3;
+  border-color: #8b7355;
+  color: #2c2c2c;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .cardsRow {
-    gap: 0.75rem;
+    height: 42vh;
+    gap: 0.5rem;
   }
   .card {
-    width: 96px;
-    height: 128px;
+    max-width: calc((100vw - 2rem) / 3 - 0.5rem);
   }
   .cardHeart {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
 }
