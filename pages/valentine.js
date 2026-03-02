@@ -117,15 +117,15 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  // 根据食指指向判断左/中/右：指根(5)到指尖(8)的向量。镜像画面下 dirX<0 为指向左
+  // 根据食指指向判断左/中/右。视频用 scaleX(-1) 翻转，使「实际右=画面右」；raw 帧里实际右=图像左，故 dirX<0 → 实际指向右 → 右卡
   const POINTING_THRESHOLD = 0.04;
   const getPointingDirection = (landmarks) => {
     if (!landmarks || landmarks.length < 9) return 1;
     const base = landmarks[5]; // 食指掌指关节
     const tip = landmarks[8]; // 食指指尖
     const dirX = tip.x - base.x;
-    if (dirX < -POINTING_THRESHOLD) return 0; // 指向左 → 左卡
-    if (dirX > POINTING_THRESHOLD) return 2;  // 指向右 → 右卡
+    if (dirX < -POINTING_THRESHOLD) return 2; // 实际指向右 → 右卡
+    if (dirX > POINTING_THRESHOLD) return 0;  // 实际指向左 → 左卡
     return 1; // 中间
   };
 
@@ -236,7 +236,7 @@ function Valentine() {
               <>
                 <div className={styles.cameraArea}>
                   {cameraAllowed && (
-                    <video ref={videoRef} autoPlay muted playsInline className={styles.video} />
+                    <video ref={videoRef} autoPlay muted playsInline className={styles.videoMirrorMatch} />
                   )}
                   {!cameraAllowed && <span className={styles.cameraPlaceholder}>摄像头未开启或已拒绝</span>}
                 </div>
