@@ -1,13 +1,11 @@
-// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 手指晃动约3s → 揭晓 → 爱心结果页
+// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 识别到手指后提示，5s 后抽卡 → 揭晓 → 爱心结果页
 import Head from 'next/head';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/Valentine.module.css';
 
 const REVEAL_DURATION_MS = 4400; // 揭晓动画放慢 2 倍 (原 2200)
-// 手指晃动检测：采样间隔(ms)、满 3 秒的采样数、判定为「晃动」的位移阈值(归一化 0~1)
+const HAND_DETECTED_COUNTDOWN_MS = 5000; // 识别到手指后提示显示，5s 后自动抽卡
 const HAND_SAMPLE_MS = 50;
-const HAND_WAVE_DURATION_SAMPLES = 60;   // 60 * 50ms = 3s
-const HAND_WAVE_MOVEMENT_THRESHOLD = 0.12; // 3 秒内手指水平位移范围超过此值视为晃动
 
 function Valentine() {
   const [phase, setPhase] = useState('name'); // 'name' | 'cards' | 'reveal' | 'result'
@@ -16,13 +14,15 @@ function Valentine() {
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [triggered, setTriggered] = useState(false);
   const [handReady, setHandReady] = useState(false);
+  const [showHandPrompt, setShowHandPrompt] = useState(false); // 识别到手指后显示中央提示
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const handLandmarkerRef = useRef(null);
-  const positionBufferRef = useRef([]);
   const tickRef = useRef(null);
   const triggeredRef = useRef(false);
+  const handPromptShownRef = useRef(false); // 是否已弹出过提示（只弹一次）
+  const countdownTimerRef = useRef(null);
 
   const startDraw = useCallback(() => {
     if (phase !== 'cards' || triggeredRef.current) return;
@@ -42,6 +42,10 @@ function Valentine() {
     triggeredRef.current = false;
     setTriggered(false);
     setChosenCardIndex(null);
+    handPromptShownRef.current = false;
+    setShowHandPrompt(false);
+    if (countdownTimerRef.current) clearTimeout(countdownTimerRef.current);
+    countdownTimerRef.current = null;
   };
 
   // 摄像头：仅在 cards 阶段
@@ -111,7 +115,7 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  // 手指晃动检测：有人手且食指指尖在约 1 秒内晃动超过阈值则触发抽卡
+  // 手指识别：检测到人手后弹出中央提示，5s 后自动抽卡
   useEffect(() => {
     if (phase !== 'cards' || !cameraAllowed || !videoRef.current || !handReady || triggeredRef.current) return;
     const video = videoRef.current;
@@ -135,32 +139,13 @@ function Valentine() {
       try {
         const result = landmarker.detectForVideo(video, Math.round(timestamp));
         const landmarks = result?.landmarks?.[0];
-        if (landmarks && landmarks.length >= 9) {
-          // 食指指尖 landmark index 8
-          const indexTip = landmarks[8];
-          const x = indexTip.x;
-          const y = indexTip.y;
-          const buf = positionBufferRef.current;
-          buf.push({ x, y });
-          if (buf.length > HAND_WAVE_DURATION_SAMPLES) buf.shift();
-          if (buf.length === HAND_WAVE_DURATION_SAMPLES) {
-            let minX = buf[0].x, maxX = buf[0].x;
-            let minY = buf[0].y, maxY = buf[0].y;
-            for (let i = 1; i < buf.length; i++) {
-              minX = Math.min(minX, buf[i].x);
-              maxX = Math.max(maxX, buf[i].x);
-              minY = Math.min(minY, buf[i].y);
-              maxY = Math.max(maxY, buf[i].y);
-            }
-            const rangeX = maxX - minX;
-            const rangeY = maxY - minY;
-            if (rangeX >= HAND_WAVE_MOVEMENT_THRESHOLD || rangeY >= HAND_WAVE_MOVEMENT_THRESHOLD) {
-              positionBufferRef.current = [];
-              startDraw();
-            }
-          }
-        } else {
-          positionBufferRef.current = [];
+        if (landmarks && landmarks.length >= 9 && !handPromptShownRef.current) {
+          handPromptShownRef.current = true;
+          setShowHandPrompt(true);
+          countdownTimerRef.current = setTimeout(() => {
+            countdownTimerRef.current = null;
+            startDraw();
+          }, HAND_DETECTED_COUNTDOWN_MS);
         }
       } catch (_) {}
 
@@ -175,7 +160,10 @@ function Valentine() {
     return () => {
       clearTimeout(t);
       if (tickRef.current) cancelAnimationFrame(tickRef.current);
-      positionBufferRef.current = [];
+      if (countdownTimerRef.current) {
+        clearTimeout(countdownTimerRef.current);
+        countdownTimerRef.current = null;
+      }
     };
   }, [phase, cameraAllowed, handReady, startDraw]);
 
@@ -235,8 +223,15 @@ function Valentine() {
                   {!cameraAllowed && <span className={styles.cameraPlaceholder}>摄像头未开启或已拒绝</span>}
                 </div>
                 <p className={styles.instruction}>
-                  {handReady ? '把手伸入画面，手指晃动约 3 秒后自动抽卡' : '正在加载手势识别…'}
+                  {handReady ? '把手伸入画面，识别到手指后将提示抽卡' : '正在加载手势识别…'}
                 </p>
+                {showHandPrompt && (
+                  <div className={styles.handPromptOverlay}>
+                    <p className={styles.handPromptText}>
+                      识别到手指，请轻轻转动手指以抽取贺卡，5s之后抽取贺卡
+                    </p>
+                  </div>
+                )}
                 <button type="button" className={styles.btnWand} onClick={startDraw}>
                   或点击此处挥动魔杖
                 </button>
