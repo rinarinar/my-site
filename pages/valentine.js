@@ -1,4 +1,4 @@
-// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 识别到手指后提示，5s 后抽卡 → 揭晓 → 爱心结果页
+// pages/valentine.js — 💌 情人节魔杖抽卡：输入名字 → 三张卡+摄像头 → 手指指向左/中/右，5s 后抽取对应卡片 → 揭晓 → 爱心结果页
 import Head from 'next/head';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/Valentine.module.css';
@@ -21,14 +21,16 @@ function Valentine() {
   const handLandmarkerRef = useRef(null);
   const tickRef = useRef(null);
   const triggeredRef = useRef(false);
-  const handPromptShownRef = useRef(false); // 是否已弹出过提示（只弹一次）
+  const handPromptShownRef = useRef(false);
   const countdownTimerRef = useRef(null);
+  const lastPointingDirRef = useRef(1); // 指尖指向：0=左 1=中 2=右，用于 5s 到时选卡
 
-  const startDraw = useCallback(() => {
+  // chosenIndex: 0=左 1=中 2=右；不传则随机（如点击按钮）
+  const startDraw = useCallback((chosenIndex) => {
     if (phase !== 'cards' || triggeredRef.current) return;
     triggeredRef.current = true;
     setTriggered(true);
-    const chosen = Math.floor(Math.random() * 3);
+    const chosen = typeof chosenIndex === 'number' ? Math.max(0, Math.min(2, chosenIndex)) : Math.floor(Math.random() * 3);
     setChosenCardIndex(chosen);
     setPhase('reveal');
     setTimeout(() => setPhase('result'), REVEAL_DURATION_MS);
@@ -115,7 +117,19 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  // 手指识别：检测到人手后弹出中央提示，5s 后自动抽卡
+  // 根据食指指向判断左/中/右：指根(5)到指尖(8)的向量。视频已取消镜像(scaleX(-1))，与 raw 帧左右相反，故 dirX>0 表示指向画面左侧
+  const POINTING_THRESHOLD = 0.04;
+  const getPointingDirection = (landmarks) => {
+    if (!landmarks || landmarks.length < 9) return 1;
+    const base = landmarks[5]; // 食指掌指关节
+    const tip = landmarks[8]; // 食指指尖
+    const dirX = tip.x - base.x;
+    if (dirX > POINTING_THRESHOLD) return 0;  // 画面左 → 左卡
+    if (dirX < -POINTING_THRESHOLD) return 2; // 画面右 → 右卡
+    return 1; // 中间
+  };
+
+  // 手指识别：检测到人手后弹出中央提示，5s 后按当前指向选卡
   useEffect(() => {
     if (phase !== 'cards' || !cameraAllowed || !videoRef.current || !handReady || triggeredRef.current) return;
     const video = videoRef.current;
@@ -139,13 +153,17 @@ function Valentine() {
       try {
         const result = landmarker.detectForVideo(video, Math.round(timestamp));
         const landmarks = result?.landmarks?.[0];
-        if (landmarks && landmarks.length >= 9 && !handPromptShownRef.current) {
-          handPromptShownRef.current = true;
-          setShowHandPrompt(true);
-          countdownTimerRef.current = setTimeout(() => {
-            countdownTimerRef.current = null;
-            startDraw();
-          }, HAND_DETECTED_COUNTDOWN_MS);
+        if (landmarks && landmarks.length >= 9) {
+          lastPointingDirRef.current = getPointingDirection(landmarks);
+          if (!handPromptShownRef.current) {
+            handPromptShownRef.current = true;
+            setShowHandPrompt(true);
+            countdownTimerRef.current = setTimeout(() => {
+              countdownTimerRef.current = null;
+              const chosen = lastPointingDirRef.current;
+              startDraw(chosen);
+            }, HAND_DETECTED_COUNTDOWN_MS);
+          }
         }
       } catch (_) {}
 
@@ -218,22 +236,22 @@ function Valentine() {
               <>
                 <div className={styles.cameraArea}>
                   {cameraAllowed && (
-                    <video ref={videoRef} autoPlay muted playsInline className={styles.video} />
+                    <video ref={videoRef} autoPlay muted playsInline className={styles.videoUnmirrored} />
                   )}
                   {!cameraAllowed && <span className={styles.cameraPlaceholder}>摄像头未开启或已拒绝</span>}
                 </div>
                 <p className={styles.instruction}>
-                  {handReady ? '把手伸入画面，识别到手指后将提示抽卡' : '正在加载手势识别…'}
+                  {handReady ? '把手伸入画面，用手指指向左/中/右卡片，5秒后抽取对应方向贺卡' : '正在加载手势识别…'}
                 </p>
                 {showHandPrompt && (
                   <div className={styles.handPromptOverlay}>
                     <p className={styles.handPromptText}>
-                      识别到手指，请轻轻转动手指以抽取贺卡，5s之后抽取贺卡
+                      识别到手指，请指向左侧、中间或右侧的卡片，5秒后将抽取对应方向的贺卡
                     </p>
                   </div>
                 )}
-                <button type="button" className={styles.btnWand} onClick={startDraw}>
-                  或点击此处挥动魔杖
+                <button type="button" className={styles.btnWand} onClick={() => startDraw()}>
+                  或点击此处随机抽卡
                 </button>
               </>
             )}
