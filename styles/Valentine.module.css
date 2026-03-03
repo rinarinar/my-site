@@ -195,12 +195,14 @@
 .drawnCard .cardNameZh {
   font-size: clamp(0.9rem, 2.5vw, 1.25rem);
   font-weight: 600;
-  color: #3d3429;
+  color: #fff4de;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .drawnCard .cardNameEn {
   font-size: 0.55em;
-  color: #6b5b4f;
+  color: #f3e4c7;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .drawnCardFlyIn {
@@ -367,15 +369,17 @@
 .spreadCard .cardNameZh {
   font-size: clamp(0.65rem, 1.8vw, 1rem);
   font-weight: 600;
-  color: #3d3429;
+  color: #fff4de;
   line-height: 1.2;
   text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .spreadCard .cardNameEn {
   font-size: 0.5em;
-  color: #6b5b4f;
+  color: #f3e4c7;
   letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 /* 一副牌弧形展开，背面向上 */
@@ -511,7 +515,7 @@
 
 .cardFace {
   transform: rotateY(180deg);
-  background: #111;
+  background: linear-gradient(180deg, #fffaf8 0%, #fdf0ed 50%, #fce8e4 100%);
   border: 2px solid rgba(180, 140, 120, 0.35);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
@@ -526,15 +530,12 @@
 }
 
 .cardFace {
-  position: relative;
   flex-direction: column;
   justify-content: flex-end;
-  align-items: center;
-  gap: 0.12rem;
-  padding: 0.45rem 0.35rem;
+  gap: 0;
 }
 
-.cardArt {
+.cardArtwork {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -542,15 +543,16 @@
   object-fit: cover;
 }
 
-.cardFace::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 42%;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(24, 20, 16, 0.78) 75%, rgba(24, 20, 16, 0.88) 100%);
+.cardNameOverlay {
+  position: relative;
   z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  padding: 0.45rem 0.35rem 0.5rem;
+  background: linear-gradient(180deg, rgba(20, 16, 14, 0) 0%, rgba(20, 16, 14, 0.72) 72%, rgba(20, 16, 14, 0.82) 100%);
 }
 
 .cardSymbol {
@@ -562,14 +564,6 @@
   font-size: 0.65em;
   color: #6b5b4f;
   letter-spacing: 0.15em;
-}
-
-.cardNameZh,
-.cardNameEn {
-  position: relative;
-  z-index: 2;
-  color: #f4efe6;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
 }
 
 /* 揭晓时：光束罩 + 粒子（水晶感） */

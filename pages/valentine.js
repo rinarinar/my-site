@@ -253,6 +253,16 @@ function Valentine() {
     };
   };
 
+  const renderCardFace = (card) => (
+    <div className={styles.cardFace}>
+      <img className={styles.cardArtwork} src={`/tarot/${card.slug}.webp`} alt={`${card.nameZh} ${card.nameEn}`} loading="lazy" />
+      <div className={styles.cardNameOverlay}>
+        <span className={styles.cardNameZh}>{card.nameZh}</span>
+        <span className={styles.cardNameEn}>{card.nameEn}</span>
+      </div>
+    </div>
+  );
+
   useEffect(() => {
     if (phase !== 'cards' || !cameraAllowed || !videoRef.current || !handReady || drawStep >= DRAW_COUNT || triggeredForStepRef.current) return;
     const video = videoRef.current;
@@ -356,11 +366,7 @@ function Valentine() {
                     >
                       <div className={styles.cardInner}>
                         <div className={styles.cardBack} />
-                        <div className={styles.cardFace}>
-                          <img className={styles.cardArt} src={`/tarot/${card.slug}.webp`} alt={`${card.nameZh} ${card.nameEn}`} loading="lazy" />
-                          <span className={styles.cardNameZh}>{card.nameZh}</span>
-                          <span className={styles.cardNameEn}>{card.nameEn}</span>
-                        </div>
+                        {renderCardFace(card)}
                       </div>
                     </div>
                   ))}
@@ -390,11 +396,7 @@ function Valentine() {
                         <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''} ${phase === 'result' ? styles.drawnCardRevealed : ''}`}>
                           <div className={styles.cardInner}>
                             <div className={styles.cardBack} />
-                            <div className={styles.cardFace}>
-                              <img className={styles.cardArt} src={`/tarot/${card.slug}.webp`} alt={`${card.nameZh} ${card.nameEn}`} loading="lazy" />
-                              <span className={styles.cardNameZh}>{card.nameZh}</span>
-                              <span className={styles.cardNameEn}>{card.nameEn}</span>
-                            </div>
+                            {renderCardFace(card)}
                           </div>
                         </div>
                       ) : null;
