@@ -247,7 +247,7 @@ function Valentine() {
   const getFanCardStyle = (i) => {
     const t = TAROT_CARD_COUNT <= 1 ? 0 : (i / (TAROT_CARD_COUNT - 1)) * 2 - 1; // -1..1
     const angle = t * 36;
-    const x = t * 28; // 两侧保留 1/8 页面空白
+    const x = t * 36; // 使用容器百分比定位，避免移动端超画框
     // 左到右先升高再降低：中心最高，两侧较低
     const y = (1 - t * t) * 9.5;
     // 右侧牌覆盖左侧牌：索引越大层级越高
@@ -255,8 +255,8 @@ function Valentine() {
     return {
       '--spread-i': i,
       '--fan-angle': `${angle}deg`,
-      '--fan-x': `${x}vw`,
-      '--fan-y': `${y}vw`,
+      '--fan-x': `${x}%`,
+      '--fan-y': `${y}%`,
       '--fan-z': depth,
     };
   };

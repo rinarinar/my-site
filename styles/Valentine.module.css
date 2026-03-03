@@ -236,12 +236,12 @@
 /* 排队中被抽走的牌：淡出缩小，表示已抽出（保留扇形角） */
 .spreadCard.cardPulledOut {
   opacity: 0.2;
-  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) rotate(var(--fan-angle)) scale(0.85);
+  transform: translateX(-50%) rotate(var(--fan-angle)) scale(0.85);
   pointer-events: none;
 }
 
 .spreadCard.cardPulledOut.cardLifted {
-  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) rotate(var(--fan-angle)) scale(0.85);
+  transform: translateX(-50%) rotate(var(--fan-angle)) scale(0.85);
 }
 
 /* 提醒：第x张牌 */
@@ -330,11 +330,11 @@
 @keyframes spreadIn {
   from {
     opacity: 0;
-    transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1 - 40px)) scale(0.6) rotate(var(--fan-angle));
+    transform: translateX(-50%) translateY(-40px) scale(0.6) rotate(var(--fan-angle));
   }
   to {
     opacity: 1;
-    transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) scale(1) rotate(var(--fan-angle));
+    transform: translateX(-50%) scale(1) rotate(var(--fan-angle));
   }
 }
 
@@ -349,14 +349,14 @@
 
 .spreadCard {
   position: absolute;
-  left: 50%;
-  bottom: 0;
+  left: calc(50% + var(--fan-x));
+  bottom: var(--fan-y);
   width: var(--card-w);
   aspect-ratio: 2 / 3;
   perspective: 500px;
   transform-origin: 50% 100%;
   z-index: var(--fan-z);
-  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) rotate(var(--fan-angle));
+  transform: translateX(-50%) rotate(var(--fan-angle));
   transition: transform 0.25s ease, opacity 0.4s ease, filter 0.25s ease;
 }
 
@@ -365,7 +365,7 @@
 }
 
 .spreadCard.cardLifted {
-  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1 - 25%)) scale(1.25) rotate(var(--fan-angle));
+  transform: translateX(-50%) translateY(-25%) scale(1.25) rotate(var(--fan-angle));
   z-index: calc(var(--fan-z) + 2000);
   filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
 }
@@ -812,9 +812,9 @@
   }
 
   .spreadRow {
-    width: 84vw;
+    width: 88%;
     height: clamp(248px, 72vw, 360px);
-    --card-w: clamp(92px, 27vw, 148px);
+    --card-w: 24%;
   }
 
   .drawnSection {
