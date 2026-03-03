@@ -87,7 +87,7 @@ const TAROT_CARDS = [
 
 const TAROT_CARD_COUNT = TAROT_CARDS.length;
 const DRAW_COUNT = 3;
-const CONFIRM_HOLD_MS = 2000; // 固定在同一张牌 2s 确认抽牌
+const CONFIRM_HOLD_MS = 1500; // 固定在同一张牌 1.5s 确认抽牌
 const REVEAL_DURATION_MS = 3800;
 const HAND_SAMPLE_MS = 50;
 const TOAST_DURATION_MS = 1600;
@@ -343,7 +343,7 @@ function Valentine() {
     <>
       <Head>
         <title>塔罗牌 | Rina个人网站</title>
-        <meta name="description" content="塔罗牌：抽3张牌，手指滑动选牌，固定2秒确认抽取" />
+        <meta name="description" content="塔罗牌：抽3张牌，手指滑动选牌，固定1.5秒确认抽取" />
         <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
       </Head>
 
@@ -384,7 +384,7 @@ function Valentine() {
               {phase === 'cards' && (
                 <>
                   <p className={styles.instruction}>
-                    {handReady ? `请选第 ${drawStep + 1} 张牌（共3张），指向一张固定2秒即确认` : '正在加载手势识别…'}
+                    {handReady ? `请选第 ${drawStep + 1} 张牌（共3张），指向一张固定1.5秒即确认` : '正在加载手势识别…'}
                   </p>
                   <button type="button" className={styles.btnWand} onClick={() => startDraw(Math.floor(Math.random() * TAROT_CARD_COUNT))}>
                     或点击随机抽当前张

@@ -796,11 +796,12 @@
 
 @media (max-width: 640px) {
   .stepCards {
-    padding-top: 0.9rem;
+    padding-top: 0.35rem;
   }
 
   .spreadSection {
-    margin-top: 0;
+    margin-top: -0.2rem;
+    margin-bottom: 0;
     gap: 0.75rem;
   }
 
@@ -808,7 +809,7 @@
     position: static;
     align-self: flex-end;
     width: min(172px, 42vw);
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.2rem;
   }
 
   .spreadRow {
@@ -820,7 +821,7 @@
   .drawnSection {
     --drawn-card-w: clamp(88px, 27vw, 118px);
     min-height: calc(var(--drawn-card-w) * 5 / 3 + 1.2rem);
-    padding: 0.5rem 0 1.2rem;
+    padding: 0 0 1.2rem;
   }
 
   .drawnRow {
