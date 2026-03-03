@@ -357,6 +357,7 @@ function Valentine() {
                       <div className={styles.cardInner}>
                         <div className={styles.cardBack} />
                         <div className={styles.cardFace}>
+                          <img className={styles.cardArt} src={`/tarot/${card.slug}.webp`} alt={`${card.nameZh} ${card.nameEn}`} loading="lazy" />
                           <span className={styles.cardNameZh}>{card.nameZh}</span>
                           <span className={styles.cardNameEn}>{card.nameEn}</span>
                         </div>
@@ -390,6 +391,7 @@ function Valentine() {
                           <div className={styles.cardInner}>
                             <div className={styles.cardBack} />
                             <div className={styles.cardFace}>
+                              <img className={styles.cardArt} src={`/tarot/${card.slug}.webp`} alt={`${card.nameZh} ${card.nameEn}`} loading="lazy" />
                               <span className={styles.cardNameZh}>{card.nameZh}</span>
                               <span className={styles.cardNameEn}>{card.nameEn}</span>
                             </div>
