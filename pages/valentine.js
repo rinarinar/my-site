@@ -1,16 +1,18 @@
-// pages/valentine.js — 塔罗牌：抽3张，每张点一下确认 → 弹出「第x张牌」→ 牌飞入下方居中
+// pages/valentine.js — 塔罗牌：抽3张，每张在同一张牌上固定2s确认 → 弹出「第x张牌」→ 牌飞入下方居中
 import Head from 'next/head';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/Valentine.module.css';
 
 const TAROT_CARD_COUNT = 78;
 const DRAW_COUNT = 3;
-const CONFIRM_HOLD_MS = 350;
+const CONFIRM_HOLD_MS = 2000; // 固定在同一张牌 2s 确认抽牌
 const REVEAL_DURATION_MS = 3800;
-const HAND_SAMPLE_MS = 60;
-const VELOCITY_FAST_PER_MS = 0.0012;
-const SLOW_STEP_MS = 140;
+const HAND_SAMPLE_MS = 50;
 const TOAST_DURATION_MS = 1600;
+// 触摸板式：选牌跟随手指，快移=快跟、慢移=慢跟（lerp 系数与速度相关）
+const LERP_BASE = 0.06;   // 慢速时的跟随时长
+const LERP_VELOCITY_FACTOR = 25; // 速度乘数，速度大则 alpha 大
+const LERP_ALPHA_MAX = 0.55;
 
 function Valentine() {
   const [phase, setPhase] = useState('intro');
@@ -26,12 +28,11 @@ function Valentine() {
   const streamRef = useRef(null);
   const handLandmarkerRef = useRef(null);
   const tickRef = useRef(null);
-  const lastCardIndexRef = useRef(null);
+  const currentSelectionRef = useRef(39); // 当前选牌位置（连续值 0..77），用于平滑跟随
   const stableSinceRef = useRef(0);
   const lastTipXRef = useRef(0.5);
   const lastTipTimeRef = useRef(0);
-  const slowStepLastTimeRef = useRef(0);
-  const triggeredForStepRef = useRef(false); // 当前这一步是否已触发过确认（防止重复）
+  const triggeredForStepRef = useRef(false);
 
   const startDraw = useCallback((cardIndex) => {
     if (phase !== 'cards' || drawStep >= DRAW_COUNT || triggeredForStepRef.current) return;
@@ -45,7 +46,7 @@ function Valentine() {
     });
     setToastMessage(`第${drawStep + 1}张牌`);
     setHighlightedCardIndex(null);
-    lastCardIndexRef.current = null;
+    currentSelectionRef.current = 39;
 
     setTimeout(() => setToastMessage(null), TOAST_DURATION_MS);
     setTimeout(() => {
@@ -76,7 +77,7 @@ function Valentine() {
     setDrawnCards([null, null, null]);
     setToastMessage(null);
     setAnimatingSlot(null);
-    lastCardIndexRef.current = null;
+    currentSelectionRef.current = 39;
     setHighlightedCardIndex(null);
     triggeredForStepRef.current = false;
   };
@@ -146,9 +147,10 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  const getTargetCardIndex = (tipX) => {
-    const i = Math.floor((1 - tipX) * TAROT_CARD_COUNT);
-    return Math.max(0, Math.min(TAROT_CARD_COUNT - 1, i));
+  // 指尖 x → 连续目标位置 0..77（镜像用 1-x）
+  const getTargetContinuous = (tipX) => {
+    const c = (1 - tipX) * TAROT_CARD_COUNT;
+    return Math.max(0, Math.min(TAROT_CARD_COUNT - 0.01, c));
   };
 
   useEffect(() => {
@@ -176,37 +178,29 @@ function Valentine() {
         const landmarks = result?.landmarks?.[0];
         if (landmarks && landmarks.length >= 9) {
           const tipX = landmarks[8].x;
-          const targetIndex = getTargetCardIndex(tipX);
-          const deltaMs = now - lastTipTimeRef.current;
-          const velocity = deltaMs > 0 ? Math.abs(tipX - lastTipXRef.current) / deltaMs : 0;
+          const targetContinuous = getTargetContinuous(tipX);
+          const deltaMs = Math.max(1, now - lastTipTimeRef.current);
+          const velocity = Math.abs(tipX - lastTipXRef.current) / deltaMs;
           lastTipXRef.current = tipX;
           lastTipTimeRef.current = now;
 
-          let nextHighlight = lastCardIndexRef.current;
-          if (lastCardIndexRef.current === null) nextHighlight = targetIndex;
-          else if (velocity >= VELOCITY_FAST_PER_MS) {
-            nextHighlight = targetIndex;
-          } else {
-            if (now - slowStepLastTimeRef.current >= SLOW_STEP_MS) {
-              slowStepLastTimeRef.current = now;
-              const diff = targetIndex - lastCardIndexRef.current;
-              if (diff > 0) nextHighlight = Math.min(targetIndex, lastCardIndexRef.current + 1);
-              else if (diff < 0) nextHighlight = Math.max(targetIndex, lastCardIndexRef.current - 1);
-            } else {
-              nextHighlight = lastCardIndexRef.current;
-            }
-          }
+          // 触摸板式：快移=大 alpha 快速跟上，慢移=小 alpha 慢速跟上
+          const alpha = Math.min(LERP_ALPHA_MAX, LERP_BASE + velocity * LERP_VELOCITY_FACTOR);
+          const current = currentSelectionRef.current;
+          currentSelectionRef.current = current + (targetContinuous - current) * alpha;
+          currentSelectionRef.current = Math.max(0, Math.min(TAROT_CARD_COUNT - 0.01, currentSelectionRef.current));
 
-          if (nextHighlight !== lastCardIndexRef.current) {
-            lastCardIndexRef.current = nextHighlight;
+          const rounded = Math.round(currentSelectionRef.current);
+          const roundedClamped = Math.max(0, Math.min(TAROT_CARD_COUNT - 1, rounded));
+          setHighlightedCardIndex(roundedClamped);
+
+          if (roundedClamped !== Math.round(current)) {
             stableSinceRef.current = now;
-            setHighlightedCardIndex(nextHighlight);
           } else if (now - stableSinceRef.current >= CONFIRM_HOLD_MS) {
-            startDraw(nextHighlight);
+            startDraw(roundedClamped);
             return;
           }
         } else {
-          lastCardIndexRef.current = null;
           setHighlightedCardIndex(null);
         }
       } catch (_) {}

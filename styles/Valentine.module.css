@@ -323,7 +323,7 @@
   flex-shrink: 0;
   width: max-content;
   padding: 0 1rem;
-  --card-w: clamp(210px, 26.25vw, 330px);
+  --card-w: clamp(158px, 19.69vw, 248px); /* 当前为原来的 3/4 */
 }
 
 .spreadCard {
