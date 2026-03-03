@@ -1,14 +1,54 @@
-/* styles/Valentine.module.css — 塔罗牌 · 弧形牌面 + 手指指牌抬起 + 固定3s确认 */
+/* styles/Valentine.module.css — 塔罗牌 · 牌桌 + 78张横铺 + 快/慢滑选牌 + 2.5s确认 */
 
 .wrap {
   min-height: 100vh;
-  background: #f0efeb;
-  padding: 2rem;
+  background: #3d3429;
+  background-image:
+    linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse 120% 80% at 50% 100%, #2a231a 0%, #1f1a14 70%);
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+}
+
+/* 牌桌质感：深色木纹感 */
+.wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ========== 默认：牌桌中央塔罗风格纸条 ========== */
+.introNote {
+  position: relative;
+  z-index: 2;
+  padding: 1.5rem 3rem;
+  background: linear-gradient(180deg, #f5f0e1 0%, #e8dfc8 40%, #ddd4b8 100%);
+  border: 2px solid #8b7355;
+  border-radius: 4px;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.introNote:hover {
+  transform: scale(1.03);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+}
+
+.introNoteText {
+  font-family: 'Dancing Script', 'Brush Script MT', cursive;
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  font-weight: 600;
+  color: #3d3429;
+  letter-spacing: 0.02em;
 }
 
 /* ========== 步骤 1：输入名字（简约） ========== */
@@ -73,16 +113,103 @@
   transform: translateY(-1px);
 }
 
-/* ========== 弧形牌面（魔术师摊牌式）+ 摄像头 ========== */
+/* ========== 78张牌横铺 + 摄像头右上角 ========== */
 .stepCards {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
+  justify-content: center;
+  gap: 1rem;
   width: 100%;
-  max-width: 100%;
+  min-height: 100vh;
+  padding: 1rem;
+  padding-top: 5rem;
+}
+
+/* 摄像头：页面右上角，大小不变 */
+.cameraArea {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: min(260px, 28vw);
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #2c2c2c;
+  border: 2px solid #8b7355;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* 78张牌横着展开的容器（可缩放以适应宽度） */
+.spreadRowWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 96vw;
+}
+
+.spreadRowWrapper.spreadAnimating .spreadCard {
+  animation: spreadIn 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.spreadRowWrapper.spreadAnimating .spreadCard {
+  animation-delay: calc(var(--spread-i) * 32ms);
+}
+
+@keyframes spreadIn {
+  from {
+    opacity: 0;
+    transform: translateY(-40px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.spreadRow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0;
+  flex-shrink: 0;
+  padding: 0 0.5rem;
+}
+
+.spreadCard {
+  width: clamp(8px, 1.1vw, 14px);
+  min-width: 8px;
+  aspect-ratio: 2 / 3;
+  margin-left: -2px;
+  perspective: 400px;
+  transition: transform 0.25s ease, opacity 0.4s ease, filter 0.25s ease;
+}
+
+.spreadCard:first-child {
+  margin-left: 0;
+}
+
+.spreadCard.cardLifted {
+  transform: translateY(-12px) scale(1.15);
+  z-index: 2;
+  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
+}
+
+.spreadCard.cardFaded {
+  opacity: 0.28;
+  filter: saturate(0.6);
+}
+
+.spreadCard .cardBack::after {
+  font-size: 0.5rem;
 }
 
 /* 一副牌弧形展开，背面向上 */
@@ -305,19 +432,6 @@
   }
 }
 
-.cameraArea {
-  width: min(260px, 85vw);
-  aspect-ratio: 16 / 9;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #2c2c2c;
-  border: 1px solid #d8d6d2;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .video {
   width: 100%;
   height: 100%;
@@ -341,28 +455,29 @@
 }
 
 .instruction {
-  color: #5a5a5a;
-  font-size: 0.95rem;
+  color: #e8e0d5;
+  font-size: 0.9rem;
   text-align: center;
   margin: 0;
+  max-width: 420px;
 }
 
 .btnWand {
   padding: 0.65rem 1.35rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #5a5a5a;
-  background: #fff;
-  border: 1px solid #d8d6d2;
+  color: #e8e0d5;
+  background: rgba(139, 115, 85, 0.4);
+  border: 1px solid #8b7355;
   border-radius: 10px;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .btnWand:hover {
-  background: #f5f5f3;
-  border-color: #8b7355;
-  color: #2c2c2c;
+  background: rgba(139, 115, 85, 0.6);
+  border-color: #a08a65;
+  color: #f5f0e8;
 }
 
 /* 识别到手指后中央提示（简约） */
