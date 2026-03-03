@@ -238,10 +238,12 @@ function Valentine() {
 
   const getFanCardStyle = (i) => {
     const t = TAROT_CARD_COUNT <= 1 ? 0 : (i / (TAROT_CARD_COUNT - 1)) * 2 - 1; // -1..1
-    const angle = t * 44;
-    const x = t * 37.5; // 左右各 1/8 视口留白 -> 扇面有效宽度 75vw
-    const y = Math.pow(Math.abs(t), 1.5) * 7.5;
-    const depth = Math.round((1 - Math.abs(t)) * 1000) + i;
+    const angle = t * 36;
+    const x = t * 28; // 两侧保留 1/8 页面空白
+    // 左到右先升高再降低：中心最高，两侧较低
+    const y = (1 - t * t) * 9.5;
+    // 右侧牌覆盖左侧牌：索引越大层级越高
+    const depth = i + 1;
     return {
       '--spread-i': i,
       '--fan-angle': `${angle}deg`,
