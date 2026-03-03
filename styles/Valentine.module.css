@@ -146,13 +146,25 @@
   z-index: 10;
 }
 
-/* 78张牌横着展开的容器（可缩放以适应宽度） */
+/* 78张牌横着展开的容器（扑克式叠压，可横向滚动） */
 .spreadRowWrapper {
   width: 100%;
+  max-width: 96vw;
   display: flex;
   justify-content: center;
   align-items: center;
-  max-width: 96vw;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.spreadRowWrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.spreadRowWrapper::-webkit-scrollbar-thumb {
+  background: rgba(139, 115, 85, 0.5);
+  border-radius: 3px;
 }
 
 .spreadRowWrapper.spreadAnimating .spreadCard {
@@ -175,21 +187,25 @@
   }
 }
 
+/* 扑克式：一张压着一张，每张露出 1/4（重叠 3/4） */
 .spreadRow {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-end;
   gap: 0;
   flex-shrink: 0;
-  padding: 0 0.5rem;
+  width: max-content;
+  padding: 0 1rem;
+  --card-w: clamp(280px, 35vw, 440px);
 }
 
 .spreadCard {
-  width: clamp(8px, 1.1vw, 14px);
-  min-width: 8px;
+  width: var(--card-w);
+  flex-shrink: 0;
   aspect-ratio: 2 / 3;
-  margin-left: -2px;
-  perspective: 400px;
+  /* 每张露出 1/4，即向左偏移 3/4 宽度，形成叠压 */
+  margin-left: calc(var(--card-w) * -0.75);
+  perspective: 500px;
   transition: transform 0.25s ease, opacity 0.4s ease, filter 0.25s ease;
 }
 
@@ -198,9 +214,9 @@
 }
 
 .spreadCard.cardLifted {
-  transform: translateY(-12px) scale(1.15);
+  transform: translateY(-18px) scale(1.12);
   z-index: 2;
-  filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
+  filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
 }
 
 .spreadCard.cardFaded {
@@ -209,7 +225,16 @@
 }
 
 .spreadCard .cardBack::after {
-  font-size: 0.5rem;
+  font-size: clamp(1.2rem, 4vw, 2.2rem);
+}
+
+.spreadCard .cardSymbol {
+  font-size: clamp(3rem, 12vw, 6rem);
+}
+
+.spreadCard .cardLabel {
+  font-size: 0.5em;
+  letter-spacing: 0.12em;
 }
 
 /* 一副牌弧形展开，背面向上 */
