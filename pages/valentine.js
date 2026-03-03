@@ -288,7 +288,7 @@ function Valentine() {
                 {[0, 1, 2].map((slot) => (
                   <div key={slot} className={styles.drawnSlot}>
                     {drawnCards[slot] !== null && (
-                      <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''}`}>
+                      <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''} ${phase === 'result' ? styles.drawnCardRevealed : ''}`}>
                         <div className={styles.cardInner}>
                           <div className={styles.cardBack} />
                           <div className={styles.cardFace}>

@@ -176,6 +176,11 @@
 }
 
 .drawnCard .cardInner {
+  transform: rotateY(0);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.drawnCard.drawnCardRevealed .cardInner {
   transform: rotateY(180deg);
 }
 
@@ -326,7 +331,7 @@
   flex-shrink: 0;
   aspect-ratio: 2 / 3;
   /* 每张露出 1/4，即向左偏移 3/4 宽度，形成叠压 */
-  margin-left: calc(var(--card-w) * -7 / 8);
+  margin-left: calc(var(--card-w) * -11 / 12);
   perspective: 500px;
   transition: transform 0.25s ease, opacity 0.4s ease, filter 0.25s ease;
 }
