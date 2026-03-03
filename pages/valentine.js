@@ -104,6 +104,7 @@ function Valentine() {
   const [highlightedCardIndex, setHighlightedCardIndex] = useState(null);
   const [drawStep, setDrawStep] = useState(0); // 0,1,2 当前抽第几张
   const [drawnCards, setDrawnCards] = useState([null, null, null]); // 3张牌的索引
+  const [drawnOrientations, setDrawnOrientations] = useState(['upright', 'upright', 'upright']); // 3张牌正位/逆位
   const [toastMessage, setToastMessage] = useState(null); // "第1张牌" 等
   const [animatingSlot, setAnimatingSlot] = useState(null); // 正在播放飞入动画的槽位 0|1|2
 
@@ -127,6 +128,11 @@ function Valentine() {
       next[drawStep] = chosen;
       return next;
     });
+    setDrawnOrientations((prev) => {
+      const next = [...prev];
+      next[drawStep] = Math.random() < 0.5 ? 'upright' : 'reversed';
+      return next;
+    });
     setToastMessage(`第${drawStep + 1}张牌`);
     setHighlightedCardIndex(null);
     currentSelectionRef.current = 39;
@@ -148,6 +154,7 @@ function Valentine() {
     setPhase('spread');
     setDrawStep(0);
     setDrawnCards([null, null, null]);
+    setDrawnOrientations(['upright', 'upright', 'upright']);
     setToastMessage(null);
     setAnimatingSlot(null);
     triggeredForStepRef.current = false;
@@ -158,6 +165,7 @@ function Valentine() {
     setPhase('intro');
     setDrawStep(0);
     setDrawnCards([null, null, null]);
+    setDrawnOrientations(['upright', 'upright', 'upright']);
     setToastMessage(null);
     setAnimatingSlot(null);
     currentSelectionRef.current = 39;
@@ -392,11 +400,14 @@ function Valentine() {
                   <div key={slot} className={styles.drawnSlot}>
                     {drawnCards[slot] !== null && (() => {
                       const card = TAROT_CARDS[drawnCards[slot]];
+                      const orientation = drawnOrientations[slot];
                       return card ? (
-                        <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''} ${phase === 'result' ? styles.drawnCardRevealed : ''}`}>
-                          <div className={styles.cardInner}>
-                            <div className={styles.cardBack} />
-                            {renderCardFace(card)}
+                        <div className={`${styles.drawnCardWrap} ${orientation === 'reversed' ? styles.drawnCardReversed : ''}`}>
+                          <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''} ${phase === 'result' ? styles.drawnCardRevealed : ''}`}>
+                            <div className={styles.cardInner}>
+                              <div className={styles.cardBack} />
+                              {renderCardFace(card)}
+                            </div>
                           </div>
                         </div>
                       ) : null;
