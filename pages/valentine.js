@@ -270,7 +270,7 @@ function Valentine() {
               {phase === 'cards' && (
                 <>
                   <p className={styles.instruction}>
-                    {handReady ? `请选第 ${drawStep + 1} 张牌（共3张），指向一张点一下即确认` : '正在加载手势识别…'}
+                    {handReady ? `请选第 ${drawStep + 1} 张牌（共3张），指向一张固定2秒即确认` : '正在加载手势识别…'}
                   </p>
                   <button type="button" className={styles.btnWand} onClick={() => startDraw(Math.floor(Math.random() * TAROT_CARD_COUNT))}>
                     或点击随机抽当前张
