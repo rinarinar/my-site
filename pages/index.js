@@ -31,7 +31,7 @@ export default function Home() {
             炒股
           </Link>
           <Link href="/valentine" style={{ padding: '0.75rem 1.25rem', background: '#f0f0f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
-            💌
+            塔罗牌
           </Link>
         </div>
       </div>
