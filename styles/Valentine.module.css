@@ -196,7 +196,7 @@
   flex-shrink: 0;
   width: max-content;
   padding: 0 1rem;
-  --card-w: clamp(280px, 35vw, 440px);
+  --card-w: clamp(210px, 26.25vw, 330px);
 }
 
 .spreadCard {
@@ -204,7 +204,7 @@
   flex-shrink: 0;
   aspect-ratio: 2 / 3;
   /* 每张露出 1/4，即向左偏移 3/4 宽度，形成叠压 */
-  margin-left: calc(var(--card-w) * -0.75);
+  margin-left: calc(var(--card-w) * -5 / 6);
   perspective: 500px;
   transition: transform 0.25s ease, opacity 0.4s ease, filter 0.25s ease;
 }
