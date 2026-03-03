@@ -11,7 +11,8 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* 牌桌质感：深色木纹感 */
@@ -795,24 +796,25 @@
 
 @media (max-width: 640px) {
   .stepCards {
-    padding-top: 4.2rem;
+    padding-top: 0.9rem;
   }
 
   .spreadSection {
-    margin-top: 0.4rem;
+    margin-top: 0;
     gap: 0.75rem;
   }
 
   .cameraArea {
-    width: min(200px, 44vw);
-    top: 0.65rem;
-    right: 0.65rem;
+    position: static;
+    align-self: flex-end;
+    width: min(172px, 42vw);
+    margin-bottom: 0.5rem;
   }
 
   .spreadRow {
-    width: 75vw;
-    height: clamp(225px, 62vw, 340px);
-    --card-w: clamp(98px, 30vw, 160px);
+    width: 84vw;
+    height: clamp(248px, 72vw, 360px);
+    --card-w: clamp(92px, 27vw, 148px);
   }
 
   .drawnSection {
