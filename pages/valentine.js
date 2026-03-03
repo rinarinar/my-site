@@ -1,19 +1,101 @@
-// pages/valentine.js — 塔罗牌：抽3张，每张在同一张牌上固定2s确认 → 弹出「第x张牌」→ 牌飞入下方居中
+// pages/valentine.js — 塔罗牌：抽3张，78张牌面与 tarotwhisper.org 一一对应
 import Head from 'next/head';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/Valentine.module.css';
 
-const TAROT_CARD_COUNT = 78;
+// 78张塔罗牌与 https://tarotwhisper.org/tarot-card-meanings 顺序一一对应（大阿尔卡纳 0–21，权杖/圣杯/宝剑/星币）
+const TAROT_CARDS = [
+  { nameZh: '愚人', nameEn: 'The Fool', slug: 'the-fool' },
+  { nameZh: '魔术师', nameEn: 'The Magician', slug: 'the-magician' },
+  { nameZh: '女祭司', nameEn: 'The High Priestess', slug: 'the-high-priestess' },
+  { nameZh: '女皇', nameEn: 'The Empress', slug: 'the-empress' },
+  { nameZh: '皇帝', nameEn: 'The Emperor', slug: 'the-emperor' },
+  { nameZh: '教皇', nameEn: 'The Hierophant', slug: 'the-hierophant' },
+  { nameZh: '恋人', nameEn: 'The Lovers', slug: 'the-lovers' },
+  { nameZh: '战车', nameEn: 'The Chariot', slug: 'the-chariot' },
+  { nameZh: '力量', nameEn: 'Strength', slug: 'strength' },
+  { nameZh: '隐士', nameEn: 'The Hermit', slug: 'the-hermit' },
+  { nameZh: '命运之轮', nameEn: 'Wheel of Fortune', slug: 'wheel-of-fortune' },
+  { nameZh: '正义', nameEn: 'Justice', slug: 'justice' },
+  { nameZh: '吊人', nameEn: 'The Hanged Man', slug: 'the-hanged-man' },
+  { nameZh: '死神', nameEn: 'Death', slug: 'death' },
+  { nameZh: '节制', nameEn: 'Temperance', slug: 'temperance' },
+  { nameZh: '恶魔', nameEn: 'The Devil', slug: 'the-devil' },
+  { nameZh: '塔', nameEn: 'The Tower', slug: 'the-tower' },
+  { nameZh: '星星', nameEn: 'The Star', slug: 'the-star' },
+  { nameZh: '月亮', nameEn: 'The Moon', slug: 'the-moon' },
+  { nameZh: '太阳', nameEn: 'The Sun', slug: 'the-sun' },
+  { nameZh: '审判', nameEn: 'Judgement', slug: 'judgement' },
+  { nameZh: '世界', nameEn: 'The World', slug: 'the-world' },
+  { nameZh: '权杖王牌', nameEn: 'Ace of Wands', slug: 'ace-of-wands' },
+  { nameZh: '权杖二', nameEn: 'Two of Wands', slug: 'two-of-wands' },
+  { nameZh: '权杖三', nameEn: 'Three of Wands', slug: 'three-of-wands' },
+  { nameZh: '权杖四', nameEn: 'Four of Wands', slug: 'four-of-wands' },
+  { nameZh: '权杖五', nameEn: 'Five of Wands', slug: 'five-of-wands' },
+  { nameZh: '权杖六', nameEn: 'Six of Wands', slug: 'six-of-wands' },
+  { nameZh: '权杖七', nameEn: 'Seven of Wands', slug: 'seven-of-wands' },
+  { nameZh: '权杖八', nameEn: 'Eight of Wands', slug: 'eight-of-wands' },
+  { nameZh: '权杖九', nameEn: 'Nine of Wands', slug: 'nine-of-wands' },
+  { nameZh: '权杖十', nameEn: 'Ten of Wands', slug: 'ten-of-wands' },
+  { nameZh: '权杖侍者', nameEn: 'Page of Wands', slug: 'page-of-wands' },
+  { nameZh: '权杖骑士', nameEn: 'Knight of Wands', slug: 'knight-of-wands' },
+  { nameZh: '权杖皇后', nameEn: 'Queen of Wands', slug: 'queen-of-wands' },
+  { nameZh: '权杖国王', nameEn: 'King of Wands', slug: 'king-of-wands' },
+  { nameZh: '圣杯王牌', nameEn: 'Ace of Cups', slug: 'ace-of-cups' },
+  { nameZh: '圣杯二', nameEn: 'Two of Cups', slug: 'two-of-cups' },
+  { nameZh: '圣杯三', nameEn: 'Three of Cups', slug: 'three-of-cups' },
+  { nameZh: '圣杯四', nameEn: 'Four of Cups', slug: 'four-of-cups' },
+  { nameZh: '圣杯五', nameEn: 'Five of Cups', slug: 'five-of-cups' },
+  { nameZh: '圣杯六', nameEn: 'Six of Cups', slug: 'six-of-cups' },
+  { nameZh: '圣杯七', nameEn: 'Seven of Cups', slug: 'seven-of-cups' },
+  { nameZh: '圣杯八', nameEn: 'Eight of Cups', slug: 'eight-of-cups' },
+  { nameZh: '圣杯九', nameEn: 'Nine of Cups', slug: 'nine-of-cups' },
+  { nameZh: '圣杯十', nameEn: 'Ten of Cups', slug: 'ten-of-cups' },
+  { nameZh: '圣杯侍者', nameEn: 'Page of Cups', slug: 'page-of-cups' },
+  { nameZh: '圣杯骑士', nameEn: 'Knight of Cups', slug: 'knight-of-cups' },
+  { nameZh: '圣杯皇后', nameEn: 'Queen of Cups', slug: 'queen-of-cups' },
+  { nameZh: '圣杯国王', nameEn: 'King of Cups', slug: 'king-of-cups' },
+  { nameZh: '宝剑王牌', nameEn: 'Ace of Swords', slug: 'ace-of-swords' },
+  { nameZh: '宝剑二', nameEn: 'Two of Swords', slug: 'two-of-swords' },
+  { nameZh: '宝剑三', nameEn: 'Three of Swords', slug: 'three-of-swords' },
+  { nameZh: '宝剑四', nameEn: 'Four of Swords', slug: 'four-of-swords' },
+  { nameZh: '宝剑五', nameEn: 'Five of Swords', slug: 'five-of-swords' },
+  { nameZh: '宝剑六', nameEn: 'Six of Swords', slug: 'six-of-swords' },
+  { nameZh: '宝剑七', nameEn: 'Seven of Swords', slug: 'seven-of-swords' },
+  { nameZh: '宝剑八', nameEn: 'Eight of Swords', slug: 'eight-of-swords' },
+  { nameZh: '宝剑九', nameEn: 'Nine of Swords', slug: 'nine-of-swords' },
+  { nameZh: '宝剑十', nameEn: 'Ten of Swords', slug: 'ten-of-swords' },
+  { nameZh: '宝剑侍者', nameEn: 'Page of Swords', slug: 'page-of-swords' },
+  { nameZh: '宝剑骑士', nameEn: 'Knight of Swords', slug: 'knight-of-swords' },
+  { nameZh: '宝剑皇后', nameEn: 'Queen of Swords', slug: 'queen-of-swords' },
+  { nameZh: '宝剑国王', nameEn: 'King of Swords', slug: 'king-of-swords' },
+  { nameZh: '星币王牌', nameEn: 'Ace of Pentacles', slug: 'ace-of-pentacles' },
+  { nameZh: '星币二', nameEn: 'Two of Pentacles', slug: 'two-of-pentacles' },
+  { nameZh: '星币三', nameEn: 'Three of Pentacles', slug: 'three-of-pentacles' },
+  { nameZh: '星币四', nameEn: 'Four of Pentacles', slug: 'four-of-pentacles' },
+  { nameZh: '星币五', nameEn: 'Five of Pentacles', slug: 'five-of-pentacles' },
+  { nameZh: '星币六', nameEn: 'Six of Pentacles', slug: 'six-of-pentacles' },
+  { nameZh: '星币七', nameEn: 'Seven of Pentacles', slug: 'seven-of-pentacles' },
+  { nameZh: '星币八', nameEn: 'Eight of Pentacles', slug: 'eight-of-pentacles' },
+  { nameZh: '星币九', nameEn: 'Nine of Pentacles', slug: 'nine-of-pentacles' },
+  { nameZh: '星币十', nameEn: 'Ten of Pentacles', slug: 'ten-of-pentacles' },
+  { nameZh: '星币侍者', nameEn: 'Page of Pentacles', slug: 'page-of-pentacles' },
+  { nameZh: '星币骑士', nameEn: 'Knight of Pentacles', slug: 'knight-of-pentacles' },
+  { nameZh: '星币皇后', nameEn: 'Queen of Pentacles', slug: 'queen-of-pentacles' },
+  { nameZh: '星币国王', nameEn: 'King of Pentacles', slug: 'king-of-pentacles' },
+];
+
+const TAROT_CARD_COUNT = TAROT_CARDS.length;
 const DRAW_COUNT = 3;
 const CONFIRM_HOLD_MS = 2000; // 固定在同一张牌 2s 确认抽牌
 const REVEAL_DURATION_MS = 3800;
 const HAND_SAMPLE_MS = 50;
 const TOAST_DURATION_MS = 1600;
-// 选牌跟随：匀速=快速滑过，快速突然移动=大幅度滑过，慢速=慢速选牌；画面最左/最右=最左/最右牌
-const LERP_BASE = 0.04;   // 慢速移动时慢速跟牌
-const LERP_VELOCITY_FACTOR = 35; // 匀速/快速移动时快速跟牌
-const LERP_ALPHA_MAX = 0.6;
-const SNAP_VELOCITY_THRESHOLD = 0.018; // 超过此速度视为突然快速移动，直接大幅度跟到目标
+// 选牌：手指匀速或快速滑动=快速选牌，手指慢=正常速度选牌；保持镜像（手指往右→选牌往右）
+const LERP_BASE = 0.12;   // 慢速时正常速度跟牌
+const LERP_VELOCITY_FACTOR = 40; // 匀速/快速时快速跟牌
+const LERP_ALPHA_MAX = 0.65;
+const SNAP_VELOCITY_THRESHOLD = 0.012; // 超过此速度即快速跟到目标
 
 function Valentine() {
   const [phase, setPhase] = useState('intro');
@@ -148,7 +230,7 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  // 画面最左(tipX≈0)→最左牌(index 0)，画面最右(tipX≈1)→最右牌(index 77)
+  // 保持镜像：现实中手指往右 → 选牌往右（tipX 增大 → index 增大，最右=77）
   const getTargetContinuous = (tipX) => {
     const c = tipX * (TAROT_CARD_COUNT - 1);
     return Math.max(0, Math.min(TAROT_CARD_COUNT - 1, c));
@@ -249,7 +331,7 @@ function Valentine() {
             <div className={styles.spreadSection}>
               <div className={`${styles.spreadRowWrapper} ${phase === 'spread' ? styles.spreadAnimating : ''}`}>
                 <div className={styles.spreadRow}>
-                  {Array.from({ length: TAROT_CARD_COUNT }, (_, i) => (
+                  {TAROT_CARDS.map((card, i) => (
                     <div
                       key={i}
                       className={`${styles.spreadCard} ${highlightedCardIndex === i ? styles.cardLifted : ''} ${drawnCards.includes(i) ? styles.cardPulledOut : ''}`}
@@ -258,8 +340,8 @@ function Valentine() {
                       <div className={styles.cardInner}>
                         <div className={styles.cardBack} />
                         <div className={styles.cardFace}>
-                          <span className={styles.cardSymbol}>✦</span>
-                          <span className={styles.cardLabel}>塔罗</span>
+                          <span className={styles.cardNameZh}>{card.nameZh}</span>
+                          <span className={styles.cardNameEn}>{card.nameEn}</span>
                         </div>
                       </div>
                     </div>
@@ -284,17 +366,20 @@ function Valentine() {
               <div className={styles.drawnRow}>
                 {[0, 1, 2].map((slot) => (
                   <div key={slot} className={styles.drawnSlot}>
-                    {drawnCards[slot] !== null && (
-                      <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''} ${phase === 'result' ? styles.drawnCardRevealed : ''}`}>
-                        <div className={styles.cardInner}>
-                          <div className={styles.cardBack} />
-                          <div className={styles.cardFace}>
-                            <span className={styles.cardSymbol}>✦</span>
-                            <span className={styles.cardLabel}>塔罗</span>
+                    {drawnCards[slot] !== null && (() => {
+                      const card = TAROT_CARDS[drawnCards[slot]];
+                      return card ? (
+                        <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''} ${phase === 'result' ? styles.drawnCardRevealed : ''}`}>
+                          <div className={styles.cardInner}>
+                            <div className={styles.cardBack} />
+                            <div className={styles.cardFace}>
+                              <span className={styles.cardNameZh}>{card.nameZh}</span>
+                              <span className={styles.cardNameEn}>{card.nameEn}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      ) : null;
+                    })()}
                   </div>
                 ))}
               </div>
