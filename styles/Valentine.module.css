@@ -221,12 +221,12 @@
 /* 排队中被抽走的牌：淡出缩小，表示已抽出（保留扇形角） */
 .spreadCard.cardPulledOut {
   opacity: 0.2;
-  transform: rotate(var(--fan-angle)) scale(0.85);
+  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) rotate(var(--fan-angle)) scale(0.85);
   pointer-events: none;
 }
 
 .spreadCard.cardPulledOut.cardLifted {
-  transform: rotate(var(--fan-angle)) scale(0.85);
+  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) rotate(var(--fan-angle)) scale(0.85);
 }
 
 /* 提醒：第x张牌 */
@@ -284,15 +284,14 @@
   z-index: 10;
 }
 
-/* 78张牌横着展开的容器（扑克式叠压，一屏内展示不横向滚动） */
+/* 78张牌二维扇形展开，不做长条裁切 */
 .spreadRowWrapper {
   width: 100%;
-  max-width: 96vw;
+  max-width: 100vw;
   display: flex;
   justify-content: center;
-  align-items: center;
-  overflow-x: hidden;
-  overflow-y: hidden;
+  align-items: flex-end;
+  overflow: visible;
 }
 
 .spreadRowWrapper::-webkit-scrollbar {
@@ -316,48 +315,43 @@
 @keyframes spreadIn {
   from {
     opacity: 0;
-    transform: translateY(-40px) scale(0.6) rotate(var(--fan-angle));
+    transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1 - 40px)) scale(0.6) rotate(var(--fan-angle));
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1) rotate(var(--fan-angle));
+    transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) scale(1) rotate(var(--fan-angle));
   }
 }
 
-/* 扑克式：一张压着一张，每张露出 1/4（重叠 3/4） */
 .spreadRow {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-end;
-  gap: 0;
-  flex-shrink: 0;
-  width: max-content;
-  padding: 0 1rem;
-  /* 当前为原来的 4/3 倍大小；扇形展开总角度 */
-  --card-w: clamp(96px, 15.34vw, 173px);
-  --fan-total-deg: 42;
+  position: relative;
+  width: 75vw; /* 页面左右各留 1/8 宽度 */
+  height: clamp(280px, 46vw, 520px);
+  padding: 0;
+  /* 在上一版基础上等比例放大，配合二维扇形仍可完整露角 */
+  --card-w: clamp(128px, 20.5vw, 230px);
 }
 
 .spreadCard {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
   width: var(--card-w);
-  flex-shrink: 0;
   aspect-ratio: 2 / 3;
-  /* 扇形叠压：以底部中心为轴旋转，每张露出约 1/12 宽 */
-  margin-left: calc(var(--card-w) * -11 / 12);
   perspective: 500px;
   transform-origin: 50% 100%;
-  --fan-angle: calc((var(--spread-i) / 77) * 2 * var(--fan-total-deg) * 1deg - var(--fan-total-deg) * 1deg);
-  transform: rotate(var(--fan-angle));
+  z-index: var(--fan-z);
+  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1)) rotate(var(--fan-angle));
   transition: transform 0.25s ease, opacity 0.4s ease, filter 0.25s ease;
 }
 
 .spreadCard:first-child {
-  margin-left: 0;
+  margin-left: unset;
 }
 
 .spreadCard.cardLifted {
-  transform: translateY(-25%) scale(1.25) rotate(var(--fan-angle));
-  z-index: 2;
+  transform: translateX(var(--fan-x)) translateY(calc(var(--fan-y) * -1 - 25%)) scale(1.25) rotate(var(--fan-angle));
+  z-index: calc(var(--fan-z) + 2000);
   filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
 }
 

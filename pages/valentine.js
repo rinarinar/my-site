@@ -230,10 +230,25 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  // 保持镜像：现实中手指往右 → 选牌往右（tipX 增大 → index 增大，最右=77）
+  // 以用户体感为准：现实中手指往右，牌组高亮也往右移动
   const getTargetContinuous = (tipX) => {
-    const c = tipX * (TAROT_CARD_COUNT - 1);
+    const c = (1 - tipX) * (TAROT_CARD_COUNT - 1);
     return Math.max(0, Math.min(TAROT_CARD_COUNT - 1, c));
+  };
+
+  const getFanCardStyle = (i) => {
+    const t = TAROT_CARD_COUNT <= 1 ? 0 : (i / (TAROT_CARD_COUNT - 1)) * 2 - 1; // -1..1
+    const angle = t * 44;
+    const x = t * 37.5; // 左右各 1/8 视口留白 -> 扇面有效宽度 75vw
+    const y = Math.pow(Math.abs(t), 1.5) * 7.5;
+    const depth = Math.round((1 - Math.abs(t)) * 1000) + i;
+    return {
+      '--spread-i': i,
+      '--fan-angle': `${angle}deg`,
+      '--fan-x': `${x}vw`,
+      '--fan-y': `${y}vw`,
+      '--fan-z': depth,
+    };
   };
 
   useEffect(() => {
@@ -335,7 +350,7 @@ function Valentine() {
                     <div
                       key={i}
                       className={`${styles.spreadCard} ${highlightedCardIndex === i ? styles.cardLifted : ''} ${drawnCards.includes(i) ? styles.cardPulledOut : ''}`}
-                      style={{ '--spread-i': i }}
+                      style={getFanCardStyle(i)}
                     >
                       <div className={styles.cardInner}>
                         <div className={styles.cardBack} />
