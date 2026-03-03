@@ -9,10 +9,11 @@ const CONFIRM_HOLD_MS = 2000; // 固定在同一张牌 2s 确认抽牌
 const REVEAL_DURATION_MS = 3800;
 const HAND_SAMPLE_MS = 50;
 const TOAST_DURATION_MS = 1600;
-// 触摸板式：选牌跟随手指，快移=快跟、慢移=慢跟（lerp 系数与速度相关）
-const LERP_BASE = 0.06;   // 慢速时的跟随时长
-const LERP_VELOCITY_FACTOR = 25; // 速度乘数，速度大则 alpha 大
-const LERP_ALPHA_MAX = 0.55;
+// 选牌跟随：匀速=快速滑过，快速突然移动=大幅度滑过，慢速=慢速选牌；画面最左/最右=最左/最右牌
+const LERP_BASE = 0.04;   // 慢速移动时慢速跟牌
+const LERP_VELOCITY_FACTOR = 35; // 匀速/快速移动时快速跟牌
+const LERP_ALPHA_MAX = 0.6;
+const SNAP_VELOCITY_THRESHOLD = 0.018; // 超过此速度视为突然快速移动，直接大幅度跟到目标
 
 function Valentine() {
   const [phase, setPhase] = useState('intro');
@@ -147,10 +148,10 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  // 指尖 x → 连续目标位置 0..77（镜像用 1-x）
+  // 画面最左(tipX≈0)→最左牌(index 0)，画面最右(tipX≈1)→最右牌(index 77)
   const getTargetContinuous = (tipX) => {
-    const c = (1 - tipX) * TAROT_CARD_COUNT;
-    return Math.max(0, Math.min(TAROT_CARD_COUNT - 0.01, c));
+    const c = tipX * (TAROT_CARD_COUNT - 1);
+    return Math.max(0, Math.min(TAROT_CARD_COUNT - 1, c));
   };
 
   useEffect(() => {
@@ -184,11 +185,13 @@ function Valentine() {
           lastTipXRef.current = tipX;
           lastTipTimeRef.current = now;
 
-          // 触摸板式：快移=大 alpha 快速跟上，慢移=小 alpha 慢速跟上
-          const alpha = Math.min(LERP_ALPHA_MAX, LERP_BASE + velocity * LERP_VELOCITY_FACTOR);
+          // 慢速=慢跟、匀速=快跟、快速突然移动=大幅度滑到目标
+          const alpha = velocity >= SNAP_VELOCITY_THRESHOLD
+            ? 1
+            : Math.min(LERP_ALPHA_MAX, LERP_BASE + velocity * LERP_VELOCITY_FACTOR);
           const current = currentSelectionRef.current;
           currentSelectionRef.current = current + (targetContinuous - current) * alpha;
-          currentSelectionRef.current = Math.max(0, Math.min(TAROT_CARD_COUNT - 0.01, currentSelectionRef.current));
+          currentSelectionRef.current = Math.max(0, Math.min(TAROT_CARD_COUNT - 1, currentSelectionRef.current));
 
           const rounded = Math.round(currentSelectionRef.current);
           const roundedClamped = Math.max(0, Math.min(TAROT_CARD_COUNT - 1, rounded));
@@ -223,7 +226,7 @@ function Valentine() {
     <>
       <Head>
         <title>塔罗牌 | Rina个人网站</title>
-        <meta name="description" content="塔罗牌：抽3张牌，手指滑动选牌，点一下确认抽取" />
+        <meta name="description" content="塔罗牌：抽3张牌，手指滑动选牌，固定2秒确认抽取" />
         <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
       </Head>
 

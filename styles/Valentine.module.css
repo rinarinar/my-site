@@ -273,16 +273,15 @@
   z-index: 10;
 }
 
-/* 78张牌横着展开的容器（扑克式叠压，可横向滚动） */
+/* 78张牌横着展开的容器（扑克式叠压，一屏内展示不横向滚动） */
 .spreadRowWrapper {
   width: 100%;
   max-width: 96vw;
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
 }
 
 .spreadRowWrapper::-webkit-scrollbar {
@@ -323,7 +322,8 @@
   flex-shrink: 0;
   width: max-content;
   padding: 0 1rem;
-  --card-w: clamp(158px, 19.69vw, 248px); /* 当前为原来的 3/4 */
+  /* 3/4 比例缩小且一屏内展示 78 张，不左右滑动：总宽 ≈ card-w * (1+77/12) ≤ 96vw */
+  --card-w: clamp(72px, 11.5vw, 130px);
 }
 
 .spreadCard {
