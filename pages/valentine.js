@@ -1,62 +1,86 @@
-// pages/valentine.js — 塔罗牌：牌桌 + 点击开始 → 78张横铺展开 → 手指滑选（快滑/慢滑）+ 2.5s确认
+// pages/valentine.js — 塔罗牌：抽3张，每张点一下确认 → 弹出「第x张牌」→ 牌飞入下方居中
 import Head from 'next/head';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import styles from '../styles/Valentine.module.css';
 
 const TAROT_CARD_COUNT = 78;
-const CONFIRM_HOLD_MS = 2500; // 固定 2.5s 确认抽牌
+const DRAW_COUNT = 3;
+const CONFIRM_HOLD_MS = 350;
 const REVEAL_DURATION_MS = 3800;
 const HAND_SAMPLE_MS = 60;
-const VELOCITY_FAST_PER_MS = 0.0012; // 超过此速度视为快速滑动
-const SLOW_STEP_MS = 140; // 慢速时每 140ms 最多移动 1 张
+const VELOCITY_FAST_PER_MS = 0.0012;
+const SLOW_STEP_MS = 140;
+const TOAST_DURATION_MS = 1600;
 
 function Valentine() {
-  const [phase, setPhase] = useState('intro'); // 'intro' | 'spread' | 'cards' | 'reveal' | 'result'
-  const [chosenCardIndex, setChosenCardIndex] = useState(null);
+  const [phase, setPhase] = useState('intro');
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [handReady, setHandReady] = useState(false);
   const [highlightedCardIndex, setHighlightedCardIndex] = useState(null);
-  const [triggered, setTriggered] = useState(false);
+  const [drawStep, setDrawStep] = useState(0); // 0,1,2 当前抽第几张
+  const [drawnCards, setDrawnCards] = useState([null, null, null]); // 3张牌的索引
+  const [toastMessage, setToastMessage] = useState(null); // "第1张牌" 等
+  const [animatingSlot, setAnimatingSlot] = useState(null); // 正在播放飞入动画的槽位 0|1|2
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const handLandmarkerRef = useRef(null);
   const tickRef = useRef(null);
-  const triggeredRef = useRef(false);
   const lastCardIndexRef = useRef(null);
   const stableSinceRef = useRef(0);
   const lastTipXRef = useRef(0.5);
   const lastTipTimeRef = useRef(0);
   const slowStepLastTimeRef = useRef(0);
+  const triggeredForStepRef = useRef(false); // 当前这一步是否已触发过确认（防止重复）
 
   const startDraw = useCallback((cardIndex) => {
-    if (phase !== 'cards' || triggeredRef.current) return;
-    triggeredRef.current = true;
-    setTriggered(true);
+    if (phase !== 'cards' || drawStep >= DRAW_COUNT || triggeredForStepRef.current) return;
     const chosen = Math.max(0, Math.min(TAROT_CARD_COUNT - 1, cardIndex));
-    setChosenCardIndex(chosen);
+    triggeredForStepRef.current = true;
+    setAnimatingSlot(drawStep);
+    setDrawnCards((prev) => {
+      const next = [...prev];
+      next[drawStep] = chosen;
+      return next;
+    });
+    setToastMessage(`第${drawStep + 1}张牌`);
     setHighlightedCardIndex(null);
-    setPhase('reveal');
-    setTimeout(() => setPhase('result'), REVEAL_DURATION_MS);
-  }, [phase, triggered]);
+    lastCardIndexRef.current = null;
+
+    setTimeout(() => setToastMessage(null), TOAST_DURATION_MS);
+    setTimeout(() => {
+      setDrawStep((s) => {
+        const next = s + 1;
+        if (next >= DRAW_COUNT) setPhase('result');
+        return next;
+      });
+      triggeredForStepRef.current = false;
+      setAnimatingSlot(null);
+    }, TOAST_DURATION_MS + 600);
+  }, [phase, drawStep]);
 
   const handleStart = () => {
     if (phase !== 'intro') return;
     setPhase('spread');
-    setTimeout(() => setPhase('cards'), 2600); // 展开动画约 2.6s
+    setDrawStep(0);
+    setDrawnCards([null, null, null]);
+    setToastMessage(null);
+    setAnimatingSlot(null);
+    triggeredForStepRef.current = false;
+    setTimeout(() => setPhase('cards'), 2600);
   };
 
   const handleAgain = () => {
     setPhase('intro');
-    setChosenCardIndex(null);
-    triggeredRef.current = false;
-    setTriggered(false);
+    setDrawStep(0);
+    setDrawnCards([null, null, null]);
+    setToastMessage(null);
+    setAnimatingSlot(null);
     lastCardIndexRef.current = null;
-    stableSinceRef.current = 0;
     setHighlightedCardIndex(null);
+    triggeredForStepRef.current = false;
   };
 
-  // 摄像头：spread 或 cards 阶段开（便于 cards 时已就绪）
   useEffect(() => {
     if (phase !== 'spread' && phase !== 'cards') return;
     let cancelled = false;
@@ -89,7 +113,6 @@ function Valentine() {
     videoRef.current.srcObject = streamRef.current;
   }, [phase, cameraAllowed]);
 
-  // MediaPipe 手部识别（仅 cards）
   useEffect(() => {
     if (phase !== 'cards' || !cameraAllowed) return;
     let cancelled = false;
@@ -123,22 +146,20 @@ function Valentine() {
     };
   }, [phase, cameraAllowed]);
 
-  // 指尖 x → 牌索引 0..77；镜像下 1-x
   const getTargetCardIndex = (tipX) => {
     const i = Math.floor((1 - tipX) * TAROT_CARD_COUNT);
     return Math.max(0, Math.min(TAROT_CARD_COUNT - 1, i));
   };
 
-  // 手指检测：快滑则紧跟，慢滑则一张张；同一张 2.5s 确认
   useEffect(() => {
-    if (phase !== 'cards' || !cameraAllowed || !videoRef.current || !handReady || triggeredRef.current) return;
+    if (phase !== 'cards' || !cameraAllowed || !videoRef.current || !handReady || drawStep >= DRAW_COUNT || triggeredForStepRef.current) return;
     const video = videoRef.current;
     const landmarker = handLandmarkerRef.current;
     if (!landmarker) return;
 
     let lastSampleTime = 0;
     const detect = (timestamp) => {
-      if (triggeredRef.current) return;
+      if (triggeredForStepRef.current || drawStep >= DRAW_COUNT) return;
       if (!video.videoWidth) {
         tickRef.current = requestAnimationFrame(detect);
         return;
@@ -202,26 +223,24 @@ function Valentine() {
       clearTimeout(t);
       if (tickRef.current) cancelAnimationFrame(tickRef.current);
     };
-  }, [phase, cameraAllowed, handReady, startDraw]);
+  }, [phase, cameraAllowed, handReady, drawStep, startDraw]);
 
   return (
     <>
       <Head>
         <title>塔罗牌 | Rina个人网站</title>
-        <meta name="description" content="塔罗牌：牌桌抽牌，手指滑动选牌，保持2.5秒确认" />
+        <meta name="description" content="塔罗牌：抽3张牌，手指滑动选牌，点一下确认抽取" />
         <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&display=swap" rel="stylesheet" />
       </Head>
 
       <div className={styles.wrap}>
-        {/* 默认：牌桌 + 中央纸条「点击开始抽牌」 */}
         {phase === 'intro' && (
           <button type="button" className={styles.introNote} onClick={handleStart} aria-label="点击开始抽牌">
             <span className={styles.introNoteText}>点击开始抽牌</span>
           </button>
         )}
 
-        {/* 展开动画：78张牌横着铺开 */}
-        {(phase === 'spread' || phase === 'cards') && (
+        {(phase === 'spread' || phase === 'cards' || phase === 'result') && (
           <div className={styles.stepCards}>
             <div className={styles.cameraArea}>
               {cameraAllowed && (
@@ -230,75 +249,70 @@ function Valentine() {
               {!cameraAllowed && <span className={styles.cameraPlaceholder}>开启摄像头以手势选牌</span>}
             </div>
 
-            <div className={`${styles.spreadRowWrapper} ${phase === 'spread' ? styles.spreadAnimating : ''}`}>
-              <div className={styles.spreadRow}>
-                {Array.from({ length: TAROT_CARD_COUNT }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.spreadCard} ${highlightedCardIndex === i ? styles.cardLifted : ''} ${phase === 'reveal' && chosenCardIndex === i ? styles.cardRevealing : ''} ${phase === 'reveal' && chosenCardIndex !== i ? styles.cardFaded : ''}`}
-                    style={{ '--spread-i': i }}
-                  >
-                    <div className={styles.cardInner}>
-                      <div className={styles.cardBack} />
-                      <div className={styles.cardFace}>
-                        <span className={styles.cardSymbol}>✦</span>
-                        <span className={styles.cardLabel}>塔罗</span>
+            <div className={styles.spreadSection}>
+              <div className={`${styles.spreadRowWrapper} ${phase === 'spread' ? styles.spreadAnimating : ''}`}>
+                <div className={styles.spreadRow}>
+                  {Array.from({ length: TAROT_CARD_COUNT }, (_, i) => (
+                    <div
+                      key={i}
+                      className={`${styles.spreadCard} ${highlightedCardIndex === i ? styles.cardLifted : ''} ${drawnCards.includes(i) ? styles.cardPulledOut : ''}`}
+                      style={{ '--spread-i': i }}
+                    >
+                      <div className={styles.cardInner}>
+                        <div className={styles.cardBack} />
+                        <div className={styles.cardFace}>
+                          <span className={styles.cardSymbol}>✦</span>
+                          <span className={styles.cardLabel}>塔罗</span>
+                        </div>
                       </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              {phase === 'cards' && (
+                <>
+                  <p className={styles.instruction}>
+                    {handReady ? `请选第 ${drawStep + 1} 张牌（共3张），指向一张点一下即确认` : '正在加载手势识别…'}
+                  </p>
+                  <button type="button" className={styles.btnWand} onClick={() => startDraw(Math.floor(Math.random() * TAROT_CARD_COUNT))}>
+                    或点击随机抽当前张
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* 底部：抽出的3张牌居中 */}
+            <div className={styles.drawnSection}>
+              <div className={styles.drawnRow}>
+                {[0, 1, 2].map((slot) => (
+                  <div key={slot} className={styles.drawnSlot}>
+                    {drawnCards[slot] !== null && (
+                      <div className={`${styles.drawnCard} ${animatingSlot === slot ? styles.drawnCardFlyIn : ''}`}>
+                        <div className={styles.cardInner}>
+                          <div className={styles.cardBack} />
+                          <div className={styles.cardFace}>
+                            <span className={styles.cardSymbol}>✦</span>
+                            <span className={styles.cardLabel}>塔罗</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
-
-            {phase === 'cards' && (
-              <>
-                <p className={styles.instruction}>
-                  {handReady ? '手指快速滑动可快速扫过牌面，慢速移动则一张张选；指向一张并保持 2.5 秒即确认抽取' : '正在加载手势识别…'}
-                </p>
-                <button type="button" className={styles.btnWand} onClick={() => startDraw(Math.floor(Math.random() * TAROT_CARD_COUNT))}>
-                  或点击随机抽一张
-                </button>
-              </>
-            )}
           </div>
         )}
 
-        {(phase === 'reveal') && (
-          <div className={styles.stepCards}>
-            <div className={styles.spreadRowWrapper}>
-              <div className={styles.spreadRow}>
-                {Array.from({ length: TAROT_CARD_COUNT }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`${styles.spreadCard} ${chosenCardIndex === i ? styles.cardRevealing : ''} ${chosenCardIndex !== i ? styles.cardFaded : ''}`}
-                    style={{ '--spread-i': i }}
-                  >
-                    <div className={styles.cardInner}>
-                      <div className={styles.cardBack} />
-                      <div className={styles.cardFace}>
-                        <span className={styles.cardSymbol}>✦</span>
-                        <span className={styles.cardLabel}>塔罗</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className={styles.revealBeam} aria-hidden="true" />
-            <div className={styles.heartsFloating} aria-hidden="true">
-              {[...Array(12)].map((_, i) => (
-                <span key={i} className={styles.floatHeart} style={{ '--i': i }}>✦</span>
-              ))}
-            </div>
+        {toastMessage && (
+          <div className={styles.toast} role="status">
+            {toastMessage}
           </div>
         )}
 
         {phase === 'result' && (
-          <div className={styles.stepResult}>
-            <div className={styles.resultCard}>
-              <p className={styles.resultText}>你抽到了这张牌</p>
-              <p className={styles.resultSub}>塔罗 · 命运之选</p>
-            </div>
+          <div className={styles.resultActions}>
             <button type="button" className={styles.btnAgain} onClick={handleAgain}>
               再抽一次
             </button>

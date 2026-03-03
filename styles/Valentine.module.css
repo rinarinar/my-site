@@ -113,19 +113,141 @@
   transform: translateY(-1px);
 }
 
-/* ========== 78张牌横铺 + 摄像头右上角 ========== */
+/* ========== 78张牌横铺 + 摄像头右上角 + 底部留白放抽出的牌 ========== */
 .stepCards {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1rem;
+  justify-content: flex-start;
   width: 100%;
   min-height: 100vh;
   padding: 1rem;
   padding-top: 5rem;
+  padding-bottom: 0;
+}
+
+/* 牌区在上，保证下方至少能放一张牌的高度 */
+.spreadSection {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+/* 底部：抽出的3张牌居中，最小高度至少一张牌 */
+.drawnSection {
+  flex: 0 0 auto;
+  --drawn-card-w: clamp(100px, 18vw, 160px);
+  min-height: calc(var(--drawn-card-w) * 1.5 + 2rem);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0 2rem;
+}
+
+.drawnRow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(1rem, 3vw, 2rem);
+}
+
+.drawnSlot {
+  width: var(--drawn-card-w);
+  min-width: 90px;
+  aspect-ratio: 2 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawnCard {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  perspective: 500px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.drawnCard .cardInner {
+  transform: rotateY(180deg);
+}
+
+.drawnCard .cardBack {
+  border-radius: 12px;
+}
+
+.drawnCard .cardFace {
+  border-radius: 12px;
+}
+
+.drawnCardFlyIn {
+  animation: cardFlyToBottom 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes cardFlyToBottom {
+  from {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 排队中被抽走的牌：淡出缩小，表示已抽出 */
+.spreadCard.cardPulledOut {
+  opacity: 0.2;
+  transform: scale(0.85);
+  pointer-events: none;
+}
+
+.spreadCard.cardPulledOut.cardLifted {
+  transform: scale(0.85);
+}
+
+/* 提醒：第x张牌 */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  padding: 1rem 2rem;
+  background: rgba(30, 25, 20, 0.92);
+  color: #e8e0d5;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 2px solid #8b7355;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: toastIn 0.3s ease-out;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.resultActions {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
 }
 
 /* 摄像头：页面右上角，大小不变 */
@@ -204,7 +326,7 @@
   flex-shrink: 0;
   aspect-ratio: 2 / 3;
   /* 每张露出 1/4，即向左偏移 3/4 宽度，形成叠压 */
-  margin-left: calc(var(--card-w) * -5 / 6);
+  margin-left: calc(var(--card-w) * -7 / 8);
   perspective: 500px;
   transition: transform 0.25s ease, opacity 0.4s ease, filter 0.25s ease;
 }
