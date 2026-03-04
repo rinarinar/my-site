@@ -1,0 +1,23 @@
+---
+description: 改完代码后自动提交到当前分支并推送到 main
+alwaysApply: true
+---
+
+# 改完代码后自动发布到 main
+
+在 **本仓库（my-site）** 完成代码修改后，按以下步骤执行，无需用户再单独说「push 到 main」：
+
+1. **提交到当前分支**
+   - `git add` 本次修改过的文件（或 `git add -A`）
+   - `git status` 确认有变更
+   - `git commit -m "简短描述性信息"`（中文即可，概括本次改动）
+
+2. **推送到 main**
+   - 若当前不在 `main`：先 `git push origin <当前分支名>`，再 `git checkout main`，`git merge <刚推送的分支> -m "Merge ..."`，最后 `git push origin main`
+   - 若当前已在 `main`：直接 `git push origin main`
+
+3. **执行时**
+   - 在项目根目录执行：`cd /Users/wen.chen/cursor/my-site`（或相对该仓库的根）
+   - 需要权限：`git_write` 与 `network`
+
+完成修改并自检（如 lint）通过后，**主动执行上述 git 流程并告知用户**「已提交并推送到 main」。
