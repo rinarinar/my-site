@@ -6,7 +6,6 @@ import styles from '../styles/Navigation.module.css';
 export default function Navigation() {
   const router = useRouter();
   const navItems = [
-    { href: '/', label: '首页' },
     { href: '/answer-book', label: '答案之书' },
     { href: '/fortune', label: '算命' },
     { href: '/stock', label: '炒股' },

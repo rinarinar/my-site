@@ -1,40 +1,36 @@
 // pages/index.js
 import Link from 'next/link';
 import Head from 'next/head';
+import styles from '../styles/Home.module.css';
 
 export default function Home() {
+  const modules = [
+    { href: '/answer-book', title: '答案之书', desc: '随机回答，给你一个轻松直觉指引。' },
+    { href: '/fortune', title: '算命', desc: '快速占卜入口，探索当下趋势。' },
+    { href: '/stock', title: '炒股', desc: '股票相关工具与信息页。' },
+    { href: '/valentine', title: '塔罗牌', desc: '抽取三张塔罗牌并查看解析。' },
+  ];
+
   return (
     <>
       <Head>
         <title>Rina个人网站</title>
       </Head>
-      <div style={{
-        maxWidth: '600px',
-        margin: '0 auto',
-        padding: '3rem 2rem',
-        textAlign: 'center',
-      }}>
-        <h1 style={{ fontSize: '1.75rem', marginBottom: '1.5rem', color: '#333' }}>
-          Rina个人网站
-        </h1>
-        <p style={{ color: '#666', marginBottom: '2rem' }}>
-          欢迎，从导航栏进入各功能页面。
-        </p>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
-          <Link href="/answer-book" style={{ padding: '0.75rem 1.25rem', background: '#f0f0f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
-            答案之书
-          </Link>
-          <Link href="/fortune" style={{ padding: '0.75rem 1.25rem', background: '#f0f0f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
-            算命
-          </Link>
-          <Link href="/stock" style={{ padding: '0.75rem 1.25rem', background: '#f0f0f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
-            炒股
-          </Link>
-          <Link href="/valentine" style={{ padding: '0.75rem 1.25rem', background: '#f0f0f0', borderRadius: '8px', textDecoration: 'none', color: '#333' }}>
-            塔罗牌
-          </Link>
-        </div>
-      </div>
+      <main className={styles.home}>
+        <section className={styles.hero}>
+          <h1 className={styles.title}>Rina个人网站</h1>
+          <p className={styles.subtitle}>欢迎回来，选择下方功能开始体验。</p>
+
+          <div className={styles.grid}>
+            {modules.map((item) => (
+              <Link key={item.href} href={item.href} className={styles.card}>
+                <div className={styles.cardTitle}>{item.title}</div>
+                <p className={styles.cardDesc}>{item.desc}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+      </main>
     </>
   );
 }
