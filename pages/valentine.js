@@ -97,8 +97,11 @@ const LERP_VELOCITY_FACTOR = 40; // 匀速/快速时快速跟牌
 const LERP_ALPHA_MAX = 0.65;
 const SNAP_VELOCITY_THRESHOLD = 0.012; // 超过此速度即快速跟到目标
 
+const POSITION_LABELS = ['第一张（现状）', '第二张（阻碍/关键）', '第三张（建议/走向）'];
+
 function Valentine() {
   const [phase, setPhase] = useState('intro');
+  const [question, setQuestion] = useState('');
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [handReady, setHandReady] = useState(false);
   const [highlightedCardIndex, setHighlightedCardIndex] = useState(null);
@@ -151,6 +154,10 @@ function Valentine() {
 
   const handleStart = () => {
     if (phase !== 'intro') return;
+    if (!question.trim()) {
+      window.alert('请先输入你想占卜的问题');
+      return;
+    }
     setPhase('spread');
     setDrawStep(0);
     setDrawnCards([null, null, null]);
@@ -163,6 +170,7 @@ function Valentine() {
 
   const handleAgain = () => {
     setPhase('intro');
+    setQuestion('');
     setDrawStep(0);
     setDrawnCards([null, null, null]);
     setDrawnOrientations(['upright', 'upright', 'upright']);
@@ -172,6 +180,39 @@ function Valentine() {
     setHighlightedCardIndex(null);
     triggeredForStepRef.current = false;
   };
+
+  const getOrientationLabel = (orientation) => (orientation === 'reversed' ? '逆位' : '正位');
+
+  const getCardMeaningByName = (nameZh, orientation) => {
+    const isReversed = orientation === 'reversed';
+    const isMajor = !/权杖|圣杯|宝剑|星币/.test(nameZh);
+    if (isMajor) return isReversed ? '课题会反复出现，提醒你先处理内在卡点。' : '关键主题已经浮现，适合主动面对并推进。';
+    if (nameZh.includes('权杖')) return isReversed ? '行动力被分散，先收敛目标再发力。' : '行动与热情正在增强，适合快速推进。';
+    if (nameZh.includes('圣杯')) return isReversed ? '情绪有些失衡，先稳定感受再做决定。' : '情感与关系层面有支持，适合真诚沟通。';
+    if (nameZh.includes('宝剑')) return isReversed ? '思虑过重或沟通偏激，建议放慢判断。' : '思路开始清晰，适合理性决策与表达。';
+    return isReversed ? '现实层面有延迟，先补齐资源与节奏。' : '现实推进条件较好，适合稳步落地。';
+  };
+
+  const buildReading = () => {
+    const valid = [0, 1, 2].filter((i) => drawnCards[i] !== null);
+    if (valid.length < 3 || !question.trim()) return null;
+    const uprightCount = valid.filter((i) => drawnOrientations[i] === 'upright').length;
+    const opening = uprightCount >= 2
+      ? '整体能量偏顺，问题有解，重点在于主动行动与持续执行。'
+      : '当前阻力偏多，建议先稳住节奏，逐步拆解再推进。';
+    const items = valid.map((i) => {
+      const card = TAROT_CARDS[drawnCards[i]];
+      const orientation = drawnOrientations[i];
+      return {
+        title: `${POSITION_LABELS[i]}：${card.nameZh}（${getOrientationLabel(orientation)}）`,
+        text: getCardMeaningByName(card.nameZh, orientation),
+      };
+    });
+    const closing = '综合来看，先按第三张牌给出的建议行动 1-2 周，再回看问题会更清楚。';
+    return { opening, items, closing };
+  };
+
+  const reading = buildReading();
 
   useEffect(() => {
     if (phase !== 'spread' && phase !== 'cards') return;
@@ -349,9 +390,18 @@ function Valentine() {
 
       <div className={styles.wrap}>
         {phase === 'intro' && (
-          <button type="button" className={styles.introNote} onClick={handleStart} aria-label="点击开始抽牌">
-            <span className={styles.introNoteText}>点击开始抽牌</span>
-          </button>
+          <div className={styles.introPanel}>
+            <textarea
+              className={styles.questionInput}
+              rows={3}
+              placeholder="输入你现在最想占卜的问题（例如：这份工作机会是否适合我？）"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+            />
+            <button type="button" className={styles.introNote} onClick={handleStart} aria-label="点击开始抽牌">
+              <span className={styles.introNoteText}>点击开始抽牌</span>
+            </button>
+          </div>
         )}
 
         {(phase === 'spread' || phase === 'cards' || phase === 'result') && (
@@ -364,6 +414,11 @@ function Valentine() {
             </div>
 
             <div className={styles.spreadSection}>
+              {question.trim() && (
+                <div className={styles.questionBadge}>
+                  你的问题：{question.trim()}
+                </div>
+              )}
               <div className={`${styles.spreadRowWrapper} ${phase === 'spread' ? styles.spreadAnimating : ''}`}>
                 <div className={styles.spreadRow}>
                   {TAROT_CARDS.map((card, i) => (
@@ -416,6 +471,19 @@ function Valentine() {
                 ))}
               </div>
             </div>
+
+            {phase === 'result' && reading && (
+              <div className={styles.readingPanel}>
+                <h3 className={styles.readingTitle}>塔罗解析</h3>
+                <p className={styles.readingText}>{reading.opening}</p>
+                {reading.items.map((item) => (
+                  <p key={item.title} className={styles.readingText}>
+                    <strong>{item.title}</strong>{item.text}
+                  </p>
+                ))}
+                <p className={styles.readingText}>{reading.closing}</p>
+              </div>
+            )}
           </div>
         )}
 

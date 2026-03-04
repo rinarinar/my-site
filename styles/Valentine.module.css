@@ -44,12 +44,41 @@
   box-shadow: 0 12px 32px rgba(0,0,0,0.4);
 }
 
+.introPanel {
+  position: relative;
+  z-index: 2;
+  width: min(760px, 92vw);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
 .introNoteText {
   font-family: 'Dancing Script', 'Brush Script MT', cursive;
   font-size: clamp(1.5rem, 4vw, 2.2rem);
   font-weight: 600;
   color: #3d3429;
   letter-spacing: 0.02em;
+}
+
+.questionInput {
+  width: 100%;
+  min-height: 90px;
+  padding: 0.9rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(139, 115, 85, 0.7);
+  background: rgba(245, 240, 225, 0.95);
+  color: #3d3429;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  resize: vertical;
+  outline: none;
+}
+
+.questionInput:focus {
+  border-color: #8b7355;
+  box-shadow: 0 0 0 2px rgba(139, 115, 85, 0.2);
 }
 
 /* ========== 步骤 1：输入名字（简约） ========== */
@@ -140,6 +169,18 @@
   margin-bottom: 1rem;
 }
 
+.questionBadge {
+  max-width: min(92vw, 980px);
+  padding: 0.55rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid rgba(139, 115, 85, 0.6);
+  background: rgba(245, 240, 225, 0.9);
+  color: #3d3429;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
 /* 底部：抽出的3张牌居中，最小高度至少一张牌 */
 .drawnSection {
   flex: 0 0 auto;
@@ -151,6 +192,28 @@
   align-items: center;
   justify-content: center;
   padding: 1rem 0 2rem;
+}
+
+.readingPanel {
+  width: min(920px, 94vw);
+  margin: 0.5rem auto 2rem;
+  padding: 1rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 115, 85, 0.55);
+  background: rgba(248, 242, 230, 0.92);
+  color: #3d3429;
+}
+
+.readingTitle {
+  margin: 0 0 0.5rem;
+  font-size: 1.08rem;
+  color: #5a4d43;
+}
+
+.readingText {
+  margin: 0.35rem 0;
+  line-height: 1.55;
+  font-size: 0.92rem;
 }
 
 .drawnRow {
@@ -795,6 +858,20 @@
 }
 
 @media (max-width: 640px) {
+  .introPanel {
+    width: 94vw;
+  }
+
+  .questionInput {
+    min-height: 78px;
+    font-size: 0.88rem;
+  }
+
+  .questionBadge {
+    font-size: 0.82rem;
+    padding: 0.48rem 0.65rem;
+  }
+
   .stepCards {
     padding-top: 0.35rem;
   }
@@ -831,6 +908,20 @@
   .instruction {
     max-width: 90vw;
     font-size: 0.82rem;
+  }
+
+  .readingPanel {
+    width: 94vw;
+    margin: 0.25rem auto 1rem;
+    padding: 0.8rem;
+  }
+
+  .readingTitle {
+    font-size: 1rem;
+  }
+
+  .readingText {
+    font-size: 0.84rem;
   }
 
   .cardsRow {
