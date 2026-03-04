@@ -110,6 +110,9 @@ function Valentine() {
   const [drawnOrientations, setDrawnOrientations] = useState(['upright', 'upright', 'upright']); // 3张牌正位/逆位
   const [toastMessage, setToastMessage] = useState(null); // "第1张牌" 等
   const [animatingSlot, setAnimatingSlot] = useState(null); // 正在播放飞入动画的槽位 0|1|2
+  const [aiReading, setAiReading] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -179,6 +182,9 @@ function Valentine() {
     currentSelectionRef.current = 39;
     setHighlightedCardIndex(null);
     triggeredForStepRef.current = false;
+    setAiReading(null);
+    setAiLoading(false);
+    setAiError('');
   };
 
   const getOrientationLabel = (orientation) => (orientation === 'reversed' ? '逆位' : '正位');
@@ -213,6 +219,44 @@ function Valentine() {
   };
 
   const reading = buildReading();
+
+  useEffect(() => {
+    const valid = [0, 1, 2].filter((i) => drawnCards[i] !== null);
+    if (phase !== 'result' || !question.trim() || valid.length < 3) return;
+    let cancelled = false;
+    const cards = valid.map((i) => {
+      const card = TAROT_CARDS[drawnCards[i]];
+      return {
+        position: POSITION_LABELS[i],
+        nameZh: card.nameZh,
+        nameEn: card.nameEn,
+        orientation: getOrientationLabel(drawnOrientations[i]),
+      };
+    });
+    const run = async () => {
+      try {
+        setAiLoading(true);
+        setAiError('');
+        const res = await fetch('/api/tarot-reading', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ question: question.trim(), cards }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || '解析生成失败');
+        if (!cancelled) setAiReading(data);
+      } catch (e) {
+        if (!cancelled) {
+          setAiReading(null);
+          setAiError(e?.message || '解析服务暂不可用，已显示本地解析。');
+        }
+      } finally {
+        if (!cancelled) setAiLoading(false);
+      }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [phase, question, drawnCards, drawnOrientations]);
 
   useEffect(() => {
     if (phase !== 'spread' && phase !== 'cards') return;
@@ -475,13 +519,34 @@ function Valentine() {
             {phase === 'result' && reading && (
               <div className={styles.readingPanel}>
                 <h3 className={styles.readingTitle}>塔罗解析</h3>
-                <p className={styles.readingText}>{reading.opening}</p>
-                {reading.items.map((item) => (
-                  <p key={item.title} className={styles.readingText}>
-                    <strong>{item.title}</strong>{item.text}
+                {aiLoading && <p className={styles.readingText}>正在生成详细解析...</p>}
+                {!aiLoading && aiReading?.opening && <p className={styles.readingText}>{aiReading.opening}</p>}
+                {!aiLoading && Array.isArray(aiReading?.cardReadings) && aiReading.cardReadings.map((item) => (
+                  <p key={`${item.position}-${item.card}`} className={styles.readingText}>
+                    <strong>{item.position}：{item.card}（{item.orientation}）</strong>{item.analysis}
                   </p>
                 ))}
-                <p className={styles.readingText}>{reading.closing}</p>
+                {!aiLoading && aiReading?.conclusion && (
+                  <p className={styles.readingText}><strong>结论：</strong>{aiReading.conclusion}</p>
+                )}
+                {!aiLoading && aiReading?.advice && (
+                  <p className={styles.readingText}><strong>建议：</strong>{aiReading.advice}</p>
+                )}
+                {!aiLoading && Array.isArray(aiReading?.nextSteps) && aiReading.nextSteps.length > 0 && (
+                  <p className={styles.readingText}><strong>下一步：</strong>{aiReading.nextSteps.join('；')}</p>
+                )}
+                {!aiLoading && !aiReading && (
+                  <>
+                    <p className={styles.readingText}>{reading.opening}</p>
+                    {reading.items.map((item) => (
+                      <p key={item.title} className={styles.readingText}>
+                        <strong>{item.title}</strong>{item.text}
+                      </p>
+                    ))}
+                    <p className={styles.readingText}>{reading.closing}</p>
+                  </>
+                )}
+                {!!aiError && <p className={styles.readingText}>提示：{aiError}</p>}
               </div>
             )}
           </div>
