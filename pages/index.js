@@ -9,6 +9,7 @@ export default function Home() {
     { href: '/fortune', title: '算命', desc: '快速占卜入口，探索当下趋势。' },
     { href: '/stock', title: '炒股', desc: '股票相关工具与信息页。' },
     { href: '/valentine', title: '塔罗牌', desc: '抽取三张塔罗牌并查看解析。' },
+    { href: '/realtime', title: '实时交互', desc: '关键词搜图后拖拽到摄像头画面中实时融合。' },
   ];
 
   return (

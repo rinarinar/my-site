@@ -10,6 +10,7 @@ export default function Navigation() {
     { href: '/fortune', label: '算命' },
     { href: '/stock', label: '炒股' },
     { href: '/valentine', label: '塔罗牌' },
+    { href: '/realtime', label: '实时交互' },
   ];
 
   return (

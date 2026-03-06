@@ -1,0 +1,121 @@
+.page {
+  min-height: calc(100vh - 72px);
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 16px;
+  padding: 20px;
+  background: #f6f8fc;
+}
+
+.leftPanel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(22, 28, 45, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.rightPanel {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 24px rgba(22, 28, 45, 0.08);
+}
+
+.title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #141b34;
+}
+
+.desc {
+  margin: 8px 0 16px;
+  color: #4d5875;
+  font-size: 14px;
+}
+
+.form {
+  display: flex;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  border: 1px solid #d3dbef;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.button {
+  border: none;
+  background: #3556ff;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.results {
+  margin-top: 14px;
+  display: grid;
+  gap: 10px;
+  overflow: auto;
+}
+
+.hint {
+  margin: 0;
+  color: #7f8cad;
+  font-size: 13px;
+}
+
+.resultImage {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: grab;
+  border: 1px solid #e6ebf8;
+}
+
+.cameraArea {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #111827;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cameraMask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  font-size: 14px;
+  z-index: 3;
+}
+
+.overlay {
+  position: absolute;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (max-width: 900px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+}
