@@ -11,6 +11,7 @@ export default function Navigation() {
     { href: '/stock', label: '炒股' },
     { href: '/valentine', label: '塔罗牌' },
     { href: '/realtime', label: '实时交互' },
+    { href: '/todo', label: 'To-Do' },
   ];
 
   return (
