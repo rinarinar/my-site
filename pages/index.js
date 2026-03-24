@@ -5,6 +5,7 @@ import styles from '../styles/Home.module.css';
 
 export default function Home() {
   const modules = [
+    { href: '/todo', title: '📋 Focus List', desc: '任务管理，实时多端同步。' },
     { href: '/answer-book', title: '答案之书', desc: '随机回答，给你一个轻松直觉指引。' },
     { href: '/fortune', title: '算命', desc: '快速占卜入口，探索当下趋势。' },
     { href: '/stock', title: '炒股', desc: '股票相关工具与信息页。' },
