@@ -76,9 +76,9 @@ export default async function handler(req, res) {
         customTags: customTags || [],
         lastModified: lastModified || Date.now(),
       };
-      // 私有 store 不需要 access: 'public'
       await put(blobKey, JSON.stringify(data), {
         token: process.env.BLOB_READ_WRITE_TOKEN,
+        access: 'private',
         allowOverwrite: true,
       });
       return res.status(200).json({ ok: true, serverTime: Date.now() });
