@@ -8,7 +8,7 @@
  * Key：focus-sync:{apiKey}.json
  */
 
-import { put, list, del } from '@vercel/blob';
+import { put, list, del, head } from '@vercel/blob';
 
 function getBlobKey(apiKey) {
   return `focus-sync:${apiKey}.json`;
@@ -30,8 +30,9 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const { blobs } = await list({ prefix: blobKey });
-      if (blobs.length === 0) {
+      // 使用 head 检查文件是否存在，然后通过临时 URL 读取
+      const blobInfo = await head(blobKey, { token: process.env.BLOB_READ_WRITE_TOKEN });
+      if (!blobInfo) {
         return res.status(200).json({
           ok: true,
           tasks: [],
@@ -40,7 +41,10 @@ export default async function handler(req, res) {
           serverTime: Date.now(),
         });
       }
-      const resp = await fetch(blobs[0].url);
+      // 通过 blob url 读取内容
+      const resp = await fetch(blobInfo.url, {
+        headers: { 'Authorization': `Bearer ${process.env.BLOB_READ_WRITE_TOKEN}` }
+      });
       const data = await resp.json();
       return res.status(200).json({
         ok: true,
@@ -50,7 +54,14 @@ export default async function handler(req, res) {
         serverTime: Date.now(),
       });
     } catch (e) {
-      return res.status(500).json({ ok: false, error: e.message });
+      // 文件不存在时 head 会抛错，返回空数据
+      return res.status(200).json({
+        ok: true,
+        tasks: [],
+        customTags: [],
+        lastModified: null,
+        serverTime: Date.now(),
+      });
     }
   }
 
@@ -65,7 +76,11 @@ export default async function handler(req, res) {
         customTags: customTags || [],
         lastModified: lastModified || Date.now(),
       };
-      await put(blobKey, JSON.stringify(data), { access: 'public', allowOverwrite: true });
+      // 私有 store 不需要 access: 'public'
+      await put(blobKey, JSON.stringify(data), {
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+        allowOverwrite: true,
+      });
       return res.status(200).json({ ok: true, serverTime: Date.now() });
     } catch (e) {
       return res.status(500).json({ ok: false, error: e.message });
@@ -74,7 +89,7 @@ export default async function handler(req, res) {
 
   if (req.method === 'DELETE') {
     try {
-      await del(blobKey);
+      await del(blobKey, { token: process.env.BLOB_READ_WRITE_TOKEN });
       return res.status(200).json({ ok: true });
     } catch (e) {
       return res.status(500).json({ ok: false, error: e.message });
