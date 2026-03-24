@@ -4,54 +4,54 @@
  * POST → 推送任务
  * DELETE → 清除
  *
- * 存储：/tmp/focus-sync.json（Vercel Serverless 可写目录）
- * 注意：/tmp 在冷启动后可能被清空，但对 To-Do 场景够用
- * 如需持久化，可换 Vercel Blob / PlanetScale 等
+ * 存储：Vercel Blob（持久化，免费 1GB）
+ * Key：focus-sync:{apiKey}.json
  */
 
-import fs from 'fs';
-import path from 'path';
+import { put, list, del } from '@vercel/blob';
 
-const DATA_FILE = '/tmp/focus-sync.json';
-
-function loadStore() {
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    }
-  } catch (e) {}
-  return {};
-}
-
-function saveStore(store) {
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(store));
-  } catch (e) {}
+function getBlobKey(apiKey) {
+  return `focus-sync:${apiKey}.json`;
 }
 
 function getKey(req) {
   return req.headers['x-api-key'] || 'default';
 }
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const key = getKey(req);
-  const store = loadStore();
+  const apiKey = getKey(req);
+  const blobKey = getBlobKey(apiKey);
 
   if (req.method === 'GET') {
-    const entry = store[key] || {};
-    return res.status(200).json({
-      ok: true,
-      tasks: entry.tasks || [],
-      customTags: entry.customTags || [],
-      lastModified: entry.lastModified || null,
-      serverTime: Date.now(),
-    });
+    try {
+      const { blobs } = await list({ prefix: blobKey });
+      if (blobs.length === 0) {
+        return res.status(200).json({
+          ok: true,
+          tasks: [],
+          customTags: [],
+          lastModified: null,
+          serverTime: Date.now(),
+        });
+      }
+      const resp = await fetch(blobs[0].url);
+      const data = await resp.json();
+      return res.status(200).json({
+        ok: true,
+        tasks: data.tasks || [],
+        customTags: data.customTags || [],
+        lastModified: data.lastModified || null,
+        serverTime: Date.now(),
+      });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
   }
 
   if (req.method === 'POST') {
@@ -60,12 +60,12 @@ export default function handler(req, res) {
       if (!Array.isArray(tasks)) {
         return res.status(400).json({ ok: false, error: 'tasks must be array' });
       }
-      store[key] = {
+      const data = {
         tasks,
         customTags: customTags || [],
         lastModified: lastModified || Date.now(),
       };
-      saveStore(store);
+      await put(blobKey, JSON.stringify(data), { access: 'public', allowOverwrite: true });
       return res.status(200).json({ ok: true, serverTime: Date.now() });
     } catch (e) {
       return res.status(500).json({ ok: false, error: e.message });
@@ -73,9 +73,12 @@ export default function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
-    delete store[key];
-    saveStore(store);
-    return res.status(200).json({ ok: true });
+    try {
+      await del(blobKey);
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
   }
 
   return res.status(404).json({ ok: false, error: 'Not found' });
