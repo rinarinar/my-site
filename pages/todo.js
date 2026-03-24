@@ -3,7 +3,7 @@ import Navigation from '../components/Navigation';
 import styles from '../styles/Todo.module.css';
 
 const API = '/api/focus-sync';
-const API_KEY = 'rina-web';
+const API_KEY = 'rina-default';
 const DEFAULT_TAGS = ['work'];
 const ALL_TAGS = ['fr', '大盘', 'work', 'personal'];
 
@@ -346,9 +346,16 @@ export default function Todo() {
                     </div>
                     <div className={styles.taskActions}>
                       {tab === 'active' && !task.completed && (
-                        <button className={styles.actionArchive} onClick={() => archiveTask(task.id)} title="归档">📦</button>
+                        <button className={styles.actionBtn} onClick={() => archiveTask(task.id)} title="归档">📦</button>
                       )}
-                      <button className={styles.actionDelete} onClick={() => deleteTask(task.id)} title="删除">✕</button>
+                      {tab === 'archive' && (
+                        <button className={styles.actionBtn} onClick={() => {
+                          const updated = tasks.map(t => t.id === task.id ? { ...t, archived: false, completed: false } : t);
+                          setTasks(updated);
+                          saveTasks(updated, customTags);
+                        }} title="恢复">↩</button>
+                      )}
+                      <button className={styles.actionBtn} onClick={() => deleteTask(task.id)} title="删除">✕</button>
                     </div>
                   </div>
                 );
