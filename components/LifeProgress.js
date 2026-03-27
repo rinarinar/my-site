@@ -123,6 +123,7 @@ export default function LifeProgress() {
     weeks.push(i);
   }
   const cols = 52;
+  const rows = Math.ceil(clock.totalWeeks / cols);
 
   return (
     <div className={styles.wrap}>
@@ -190,7 +191,10 @@ export default function LifeProgress() {
       <p className={styles.gridCaption}>每个方块 = 1 周</p>
       <div
         className={styles.weekGrid}
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(2px, 1fr))` }}
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
+        }}
       >
         {weeks.map((i) => {
           let cls = styles.weekFuture;
