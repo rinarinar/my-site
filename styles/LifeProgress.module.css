@@ -1,0 +1,186 @@
+.wrap {
+  height: 100%;
+  min-height: min(85vh, 900px);
+  background: #f7f4ef;
+  padding: 1rem 1.1rem 1.25rem;
+  border-right: 1px solid rgba(142, 68, 61, 0.12);
+  overflow-y: auto;
+  font-family: 'Noto Sans SC', 'Inter', sans-serif;
+  color: #2a2a2a;
+}
+
+.config {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.configLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.configInput {
+  padding: 0.45rem 0.5rem;
+  border: 1px solid #d8d4cd;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: #fff;
+  color: #333;
+  min-width: 0;
+}
+
+.saveBtn {
+  padding: 0.48rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #8e443d;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.saveBtn:hover {
+  opacity: 0.92;
+}
+
+.quote {
+  margin: 0 0 0.35rem;
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  font-weight: 500;
+  font-style: italic;
+  color: #3d3d3d;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.updated {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.statBlock {
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 0.72rem;
+  color: #777;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+}
+
+.statNum {
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  font-size: clamp(1.75rem, 5vw, 2.35rem);
+  font-weight: 600;
+  color: #222;
+  line-height: 1.1;
+}
+
+.statUnit {
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.2rem;
+}
+
+.countdown {
+  margin-top: 0.35rem;
+  font-size: clamp(0.8rem, 2vw, 0.95rem);
+  font-variant-numeric: tabular-nums;
+  color: #c5a059;
+  font-weight: 500;
+}
+
+.barArea {
+  margin-bottom: 0.85rem;
+}
+
+.barDates {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #888;
+  margin-bottom: 0.35rem;
+}
+
+.barTrack {
+  height: 8px;
+  border-radius: 999px;
+  background: #e8e4de;
+  border: 1px solid #ddd8d0;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d2b48c 0%, #8e443d 100%);
+  transition: width 0.6s ease-out;
+}
+
+.pct {
+  text-align: center;
+  margin-top: 0.45rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.gridCaption {
+  font-size: 0.68rem;
+  color: #999;
+  margin: 0 0 0.4rem;
+  text-align: center;
+}
+
+.weekGrid {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  max-height: 280px;
+  overflow: auto;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  border: 1px solid #e5e0d8;
+}
+
+.weekPassed {
+  aspect-ratio: 1;
+  border-radius: 1px;
+  background: #d2b48c;
+}
+
+.weekCurrent {
+  aspect-ratio: 1;
+  border-radius: 1px;
+  background: #8e443d;
+  box-shadow: 0 0 0 1px #6b322d;
+}
+
+.weekFuture {
+  aspect-ratio: 1;
+  border-radius: 1px;
+  border: 1px solid #e0e0e0;
+  background: transparent;
+}
