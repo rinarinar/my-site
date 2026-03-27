@@ -46,10 +46,11 @@ function useLifeClock(birth, end) {
   const pct = totalMs > 0 ? Math.min(100, Math.max(0, (passedMs / totalMs) * 100)) : 0;
 
   const weekMs = 7 * 86400000;
-  const totalWeeks = Math.max(1, Math.ceil(totalMs / weekMs));
-  let currentWeekIndex = Math.floor(passedMs / weekMs);
-  if (currentWeekIndex >= totalWeeks) currentWeekIndex = totalWeeks - 1;
-  if (currentWeekIndex < 0) currentWeekIndex = 0;
+  const monthMs = 30.4375 * 86400000; // approximate month
+  const totalMonths = Math.max(1, Math.ceil(totalMs / monthMs));
+  let currentMonthIndex = Math.floor(passedMs / monthMs);
+  if (currentMonthIndex >= totalMonths) currentMonthIndex = totalMonths - 1;
+  if (currentMonthIndex < 0) currentMonthIndex = 0;
 
   return {
     passedDays,
@@ -61,8 +62,8 @@ function useLifeClock(birth, end) {
       s: String(cdS).padStart(2, '0'),
     },
     pct,
-    totalWeeks,
-    currentWeekIndex,
+    totalMonths,
+    currentMonthIndex,
     birthDot: formatDateDot(birth),
     endDot: formatDateDot(end),
   };
@@ -118,12 +119,13 @@ export default function LifeProgress() {
     ? new Date(lastSaved)
     : null;
 
-  const weeks = [];
-  for (let i = 0; i < clock.totalWeeks; i++) {
-    weeks.push(i);
+  const months = [];
+  for (let i = 0; i < clock.totalMonths; i++) {
+    months.push(i);
   }
-  const cols = 52;
-  const rows = Math.ceil(clock.totalWeeks / cols);
+  // Roughly 1200 months for 100 years. If we want around 1200 items in a good aspect ratio, maybe 30 cols or 40 cols
+  const cols = 40;
+  const rows = Math.ceil(clock.totalMonths / cols);
 
   return (
     <div className={styles.wrap}>
@@ -153,9 +155,6 @@ export default function LifeProgress() {
         </button>
       </div>
 
-      <blockquote className={styles.quote}>
-        stay away from unnecessary pain. Be yourself
-      </blockquote>
       {updatedLabel && (
         <p className={styles.updated}>
           — {updatedLabel.getFullYear()} / {updatedLabel.getMonth() + 1} / {updatedLabel.getDate()} 更新
@@ -188,7 +187,7 @@ export default function LifeProgress() {
         <div className={styles.pct}>{clock.pct.toFixed(1)}%</div>
       </div>
 
-      <p className={styles.gridCaption}>每个方块 = 1 周</p>
+      <p className={styles.gridCaption}>每个方块 = 1 个月</p>
       <div
         className={styles.weekGrid}
         style={{
@@ -196,11 +195,11 @@ export default function LifeProgress() {
           gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
         }}
       >
-        {weeks.map((i) => {
+        {months.map((i) => {
           let cls = styles.weekFuture;
-          if (i < clock.currentWeekIndex) cls = styles.weekPassed;
-          else if (i === clock.currentWeekIndex) cls = styles.weekCurrent;
-          return <div key={i} className={cls} title={`第 ${i + 1} 周`} />;
+          if (i < clock.currentMonthIndex) cls = styles.weekPassed;
+          else if (i === clock.currentMonthIndex) cls = styles.weekCurrent;
+          return <div key={i} className={cls} title={`第 ${i + 1} 个月`} />;
         })}
       </div>
     </div>

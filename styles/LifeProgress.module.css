@@ -1,6 +1,7 @@
 .wrap {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   height: 100%;
   background: #faf9f6;
   padding: 1.5rem 2.5rem 2rem;
@@ -54,14 +55,7 @@
 }
 
 .quote {
-  margin: 0 0 0.25rem;
-  font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
-  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
-  font-weight: 500;
-  color: #3d3d3d;
-  line-height: 1.4;
-  text-align: center;
-  flex-shrink: 0;
+  display: none;
 }
 
 .updated {
