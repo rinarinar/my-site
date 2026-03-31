@@ -14,6 +14,7 @@ export default function Home() {
     { href: '/stock', title: '炒股', desc: '股票相关工具与信息页。' },
     { href: '/valentine', title: '塔罗牌', desc: '抽取三张塔罗牌并查看解析。' },
     { href: '/realtime', title: '实时交互', desc: '关键词搜图后拖拽到摄像头画面中实时融合。' },
+    { href: '/wardrobe', title: '👗 电子衣橱', desc: '管理你的个人衣物与穿搭灵感。' },
   ];
 
   return (

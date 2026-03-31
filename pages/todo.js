@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import Navigation from '../components/Navigation';
 import styles from '../styles/Todo.module.css';
 
 const API = '/api/focus-sync';
@@ -57,11 +56,15 @@ export default function Todo() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [lastSync, setLastSync] = useState(null);
+  const [syncError, setSyncError] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editBuf, setEditBuf] = useState({ title: '', ddl: '', tags: [] });
 
   const allTags = [...ALL_TAGS, ...customTags.filter(t => !ALL_TAGS.includes(t))];
 
   const fetchTasks = useCallback(async () => {
     setSyncing(true);
+    setSyncError(null);
     try {
       const res = await fetch(API, {
         headers: { 'x-api-key': API_KEY }
@@ -71,9 +74,12 @@ export default function Todo() {
         setTasks(data.tasks || []);
         setCustomTags(data.customTags || []);
         setLastSync(new Date(data.serverTime));
+      } else {
+        setSyncError(data.error || '加载失败');
       }
     } catch(e) {
       console.error('fetch failed', e);
+      setSyncError('网络错误，请检查 /api/focus-sync');
     } finally {
       setSyncing(false);
       setLoading(false);
@@ -82,15 +88,22 @@ export default function Todo() {
 
   const saveTasks = useCallback(async (newTasks, newCustomTags) => {
     setSyncing(true);
+    setSyncError(null);
     try {
-      await fetch(API, {
+      const res = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': API_KEY },
         body: JSON.stringify({ tasks: newTasks, customTags: newCustomTags, lastModified: Date.now() })
       });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setSyncError(data.error || `保存失败 (${res.status})`);
+        return;
+      }
       setLastSync(new Date());
     } catch(e) {
       console.error('save failed', e);
+      setSyncError('保存时网络错误');
     } finally {
       setSyncing(false);
     }
@@ -150,6 +163,41 @@ export default function Todo() {
     setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
   };
 
+  const beginEdit = (task) => {
+    let ddl = '';
+    if (task.ddl) {
+      const d = new Date(task.ddl);
+      if (!Number.isNaN(d.getTime())) {
+        const pad = (n) => String(n).padStart(2, '0');
+        ddl = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+    }
+    setEditBuf({ title: task.title, ddl, tags: [...(task.tags || [])] });
+    setEditingId(task.id);
+  };
+
+  const toggleEditTag = (tag) => {
+    setEditBuf((b) => ({
+      ...b,
+      tags: b.tags.includes(tag) ? b.tags.filter((t) => t !== tag) : [...b.tags, tag],
+    }));
+  };
+
+  const saveEdit = () => {
+    if (!editingId || !editBuf.title.trim()) return;
+    const isoDdl = editBuf.ddl ? new Date(editBuf.ddl).toISOString() : null;
+    const updated = tasks.map((t) =>
+      t.id === editingId
+        ? { ...t, title: editBuf.title.trim(), ddl: isoDdl, tags: [...editBuf.tags] }
+        : t
+    );
+    setTasks(updated);
+    saveTasks(updated, customTags);
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
   // Filter & sort
   const filtered = tasks.filter(t => {
     if (tab === 'archive') return t.archived;
@@ -175,7 +223,6 @@ export default function Todo() {
 
   return (
     <>
-      <Navigation />
       <main className={styles.main}>
         <div className={styles.container}>
 
@@ -185,10 +232,10 @@ export default function Todo() {
               <h1 className={styles.title}>📋 Focus List</h1>
               <p className={styles.subtitle}>任务管理 · 实时同步</p>
             </div>
-            <div className={styles.syncBadge} onClick={fetchTasks} title="点击刷新">
+            <div className={`${styles.syncBadge} ${syncError ? styles.syncBadgeError : ''}`} onClick={fetchTasks} title="点击刷新">
               <span className={`${styles.syncDot} ${syncing ? styles.syncing : styles.synced}`}></span>
               <span className={styles.syncText}>
-                {syncing ? '同步中' : lastSync ? `已同步 ${lastSync.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}` : '加载中'}
+                {syncError ? syncError : syncing ? '同步中' : lastSync ? `已同步 ${lastSync.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}` : '加载中'}
               </span>
             </div>
           </div>
@@ -323,28 +370,72 @@ export default function Todo() {
               )}
               {sorted.map(task => {
                 const ddlInfo = formatDdl(task.ddl);
+                const editing = editingId === task.id;
                 return (
                   <div key={task.id} className={`${styles.taskItem} ${task.completed ? styles.completed : ''}`}>
-                    <div className={styles.checkbox} onClick={() => toggleComplete(task.id)}>
+                    <div className={styles.checkbox} onClick={() => !editing && toggleComplete(task.id)}>
                       {task.completed ? '✓' : ''}
                     </div>
                     <div className={styles.taskBody}>
-                      <div className={styles.taskTitle}>{task.title}</div>
-                      <div className={styles.taskMeta}>
-                        {(task.tags || []).map(tag => (
-                          <span key={tag} className={styles.taskTag} style={{
-                            background: TAG_COLORS[tag]?.bg || 'rgba(255,140,0,0.12)',
-                            color: TAG_COLORS[tag]?.color || '#FF8C00'
-                          }}>{tag}</span>
-                        ))}
-                        {ddlInfo && (
-                          <span className={`${styles.taskDdl} ${ddlInfo.cls}`}>
-                            ⏰ {ddlInfo.label}
-                          </span>
-                        )}
-                      </div>
+                      {editing ? (
+                        <div className={styles.taskEdit}>
+                          <input
+                            className={styles.editTitleInput}
+                            value={editBuf.title}
+                            onChange={(e) => setEditBuf((b) => ({ ...b, title: e.target.value }))}
+                            onKeyDown={(e) => e.key === 'Enter' && saveEdit()}
+                          />
+                          <input
+                            className={styles.editDdlInput}
+                            type="datetime-local"
+                            value={editBuf.ddl}
+                            onChange={(e) => setEditBuf((b) => ({ ...b, ddl: e.target.value }))}
+                          />
+                          <div className={styles.editTagRow}>
+                            {allTags.map((tag) => (
+                              <button
+                                key={tag}
+                                type="button"
+                                className={`${styles.tagChip} ${editBuf.tags.includes(tag) ? styles.tagSelected : ''}`}
+                                style={editBuf.tags.includes(tag) ? {
+                                  background: TAG_COLORS[tag]?.color || '#FF8C00',
+                                  color: '#fff',
+                                  borderColor: 'transparent'
+                                } : {}}
+                                onClick={() => toggleEditTag(tag)}
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                          <div className={styles.editActions}>
+                            <button type="button" className={styles.editSaveBtn} onClick={saveEdit}>保存</button>
+                            <button type="button" className={styles.editCancelBtn} onClick={cancelEdit}>取消</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className={styles.taskTitle}>{task.title}</div>
+                          <div className={styles.taskMeta}>
+                            {(task.tags || []).map(tag => (
+                              <span key={tag} className={styles.taskTag} style={{
+                                background: TAG_COLORS[tag]?.bg || 'rgba(255,140,0,0.12)',
+                                color: TAG_COLORS[tag]?.color || '#FF8C00'
+                              }}>{tag}</span>
+                            ))}
+                            {ddlInfo && (
+                              <span className={`${styles.taskDdl} ${ddlInfo.cls}`}>
+                                ⏰ {ddlInfo.label}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                     <div className={styles.taskActions}>
+                      {tab === 'active' && !task.completed && !editing && (
+                        <button className={styles.actionBtn} type="button" onClick={() => beginEdit(task)} title="编辑">✎</button>
+                      )}
                       {tab === 'active' && !task.completed && (
                         <button className={styles.actionBtn} onClick={() => archiveTask(task.id)} title="归档">📦</button>
                       )}

@@ -43,6 +43,8 @@
   flex-shrink: 0;
 }
 .syncBadge:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.syncBadgeError .syncText { color: #c62828; font-weight: 500; }
+.syncBadgeError .syncDot.synced { background: #c62828; }
 
 .syncDot {
   width: 7px;
@@ -425,3 +427,54 @@
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Inline task edit */
+.taskEdit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+.editTitleInput {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+.editDdlInput {
+  width: 100%;
+  max-width: 220px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+.editTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.editActions {
+  display: flex;
+  gap: 8px;
+}
+.editSaveBtn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #FF8C00;
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.editCancelBtn {
+  padding: 5px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
