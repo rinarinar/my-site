@@ -2,71 +2,67 @@ import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import styles from '../styles/Wardrobe.module.css';
 
-const CATEGORIES = ['上衣', '下装', '连衣裙', '鞋子', '配饰'];
+const DEFAULT_CATEGORIES = ['上衣', '下装', '连衣裙', '鞋子', '配饰', '外套'];
 const SEASONS = ['春', '夏', '秋', '冬', '四季'];
 
 export default function Wardrobe() {
   const [items, setItems] = useState([]);
-  const [activeTab, setActiveTab] = useState('manage'); // 'manage' | 'outfit'
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [savedOutfits, setSavedOutfits] = useState([]);
+  
+  const [activeTab, setActiveTab] = useState('manage'); // 'manage' | 'outfit' | 'saved'
 
   const [lastCategory, setLastCategory] = useState('上衣');
   const [lastSeason, setLastSeason] = useState(['四季']);
 
-  // Modal state
+  // Add / Edit Modal state
   const [showAdd, setShowAdd] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [parsing, setParsing] = useState(false);
+  const [batchItems, setBatchItems] = useState([]);
   
-  // newItem matches editingItem
-  // For batch add, images is an array. For editing, it's just one image.
-  const defaultItem = { category: lastCategory, season: lastSeason, images: [], price: '', link: '' };
-  const [formItem, setFormItem] = useState(defaultItem);
+  // Link parsing state
+  const [linkInput, setLinkInput] = useState('');
+  const [parsing, setParsing] = useState(false);
 
   // Outfit state
   const [outfit, setOutfit] = useState({ top: null, bottom: null, shoes: null, accessory: null });
+  const [showPicker, setShowPicker] = useState(null); // slot key: 'top' | 'bottom' | 'shoes' | 'accessory'
+
+  // Save Outfit Modal
+  const [showSaveOutfit, setShowSaveOutfit] = useState(false);
+  const [outfitSeason, setOutfitSeason] = useState('春');
 
   useEffect(() => {
-    const saved = localStorage.getItem('rina-wardrobe-items-v2');
-    if (saved) {
-      try {
-        setItems(JSON.parse(saved));
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      // Migrate old data if exists
-      const oldSaved = localStorage.getItem('rina-wardrobe-items');
-      if (oldSaved) {
-        try {
-          const old = JSON.parse(oldSaved);
-          const migrated = old.map(o => ({
-            ...o,
-            season: Array.isArray(o.season) ? o.season : [o.season],
-            price: o.price || '',
-            link: o.link || ''
-          }));
-          setItems(migrated);
-        } catch (e) {}
-      }
+    try {
+      const savedItems = localStorage.getItem('rina-wardrobe-items-v2');
+      if (savedItems) setItems(JSON.parse(savedItems));
+      
+      const savedCats = localStorage.getItem('rina-wardrobe-categories');
+      if (savedCats) setCategories(JSON.parse(savedCats));
+
+      const savedOuts = localStorage.getItem('rina-wardrobe-outfits');
+      if (savedOuts) setSavedOutfits(JSON.parse(savedOuts));
+    } catch (e) {
+      console.error(e);
     }
   }, []);
 
   useEffect(() => {
-    if (items.length > 0) {
-      localStorage.setItem('rina-wardrobe-items-v2', JSON.stringify(items));
-    } else {
-      localStorage.removeItem('rina-wardrobe-items-v2');
-    }
+    localStorage.setItem('rina-wardrobe-items-v2', JSON.stringify(items));
   }, [items]);
 
+  useEffect(() => {
+    localStorage.setItem('rina-wardrobe-categories', JSON.stringify(categories));
+  }, [categories]);
+
+  useEffect(() => {
+    localStorage.setItem('rina-wardrobe-outfits', JSON.stringify(savedOutfits));
+  }, [savedOutfits]);
+
   // Handle image upload and compress (supports multiple)
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (e, targetIndex = -1) => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
-
-    let loadedCount = 0;
-    const newImages = [];
 
     files.forEach(file => {
       const reader = new FileReader();
@@ -80,132 +76,136 @@ export default function Wardrobe() {
           canvas.height = img.height * scaleSize;
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          newImages.push(canvas.toDataURL('image/jpeg', 0.7));
-          loadedCount++;
-          if (loadedCount === files.length) {
-            setFormItem(prev => {
-              if (isEditing) {
-                // Keep only the last selected image if editing
-                return { ...prev, images: [newImages[newImages.length - 1]] };
-              }
-              // Batch add appends images
-              return { ...prev, images: [...prev.images, ...newImages] };
-            });
-          }
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          
+          setBatchItems(prev => {
+            if (targetIndex >= 0) {
+              const next = [...prev];
+              next[targetIndex].image = dataUrl;
+              return next;
+            }
+            return [...prev, {
+              id: Date.now() + Math.random(),
+              image: dataUrl,
+              category: lastCategory,
+              season: lastSeason,
+              price: '',
+              link: ''
+            }];
+          });
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
+    e.target.value = '';
   };
 
-  const removeStagedImage = (index) => {
-    setFormItem(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleLinkBlur = async () => {
-    const link = formItem.link?.trim().toLowerCase();
+  const handleParseLink = async () => {
+    const link = linkInput.trim();
     if (!link) return;
-    
-    // Guess category from URL quickly
-    let guessedCat = formItem.category;
-    if (link.includes('dress') || link.includes('裙')) guessedCat = '连衣裙';
-    else if (link.includes('shoe') || link.includes('鞋') || link.includes('sneaker') || link.includes('boot')) guessedCat = '鞋子';
-    else if (link.includes('pant') || link.includes('裤') || link.includes('skirt') || link.includes('jean')) guessedCat = '下装';
-    else if (link.includes('shirt') || link.includes('衣') || link.includes('top') || link.includes('jacket')) guessedCat = '上衣';
-    else if (link.includes('ring') || link.includes('饰') || link.includes('hat') || link.includes('帽') || link.includes('bag') || link.includes('包')) guessedCat = '配饰';
-    
-    setFormItem(prev => ({ ...prev, category: guessedCat }));
-
-    // Try to auto-parse remote link
-    if (!link.startsWith('http')) return;
     setParsing(true);
-    try {
-      const res = await fetch(`/api/parse-link?url=${encodeURIComponent(link)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setFormItem(prev => {
-          let updates = {};
-          if (data.image && !prev.images.length) {
-            // We use the remote image URL or download it. For simplicity, store the URL.
-            updates.images = [data.image];
-          }
-          if (data.price && !prev.price) updates.price = data.price;
-          if (data.season && data.season.length > 0 && prev.season.length === 1 && prev.season[0] === '四季') {
-            updates.season = data.season;
-          }
-          return { ...prev, ...updates };
-        });
+    
+    let guessedCat = lastCategory;
+    const lowerLink = link.toLowerCase();
+    if (lowerLink.includes('dress') || lowerLink.includes('裙')) guessedCat = '连衣裙';
+    else if (lowerLink.includes('shoe') || lowerLink.includes('鞋') || lowerLink.includes('boot')) guessedCat = '鞋子';
+    else if (lowerLink.includes('pant') || lowerLink.includes('裤') || lowerLink.includes('skirt')) guessedCat = '下装';
+    else if (lowerLink.includes('shirt') || lowerLink.includes('衣') || lowerLink.includes('top') || lowerLink.includes('jacket')) guessedCat = '上衣';
+    else if (lowerLink.includes('ring') || lowerLink.includes('饰') || lowerLink.includes('hat') || lowerLink.includes('帽') || lowerLink.includes('bag') || lowerLink.includes('包')) guessedCat = '配饰';
+
+    let img = '', price = '', season = lastSeason;
+
+    if (link.startsWith('http')) {
+      try {
+        const res = await fetch(`/api/parse-link?url=${encodeURIComponent(link)}`);
+        if (res.ok) {
+          const data = await res.json();
+          img = data.image || '';
+          price = data.price || '';
+          if (data.season && data.season.length > 0) season = data.season;
+        }
+      } catch (e) {
+        console.error('Parse error', e);
       }
-    } catch (e) {
-      console.error('Parse error', e);
-    } finally {
-      setParsing(false);
     }
+
+    setBatchItems(prev => [...prev, {
+      id: Date.now() + Math.random(),
+      image: img,
+      category: guessedCat,
+      season: season,
+      price,
+      link
+    }]);
+    setLinkInput('');
+    setParsing(false);
   };
 
-  const toggleSeason = (s) => {
-    const current = formItem.season || [];
-    if (s === '四季') {
-      setFormItem({ ...formItem, season: ['四季'] });
-      return;
+  const updateBatchItem = (index, field, value) => {
+    setBatchItems(prev => {
+      const next = [...prev];
+      next[index][field] = value;
+      return next;
+    });
+  };
+
+  const toggleBatchSeason = (index, s) => {
+    setBatchItems(prev => {
+      const next = [...prev];
+      const current = next[index].season || [];
+      if (s === '四季') {
+        next[index].season = ['四季'];
+      } else {
+        let newS = current.includes(s) ? current.filter(x => x !== s) : [...current.filter(x => x !== '四季'), s];
+        if (newS.length === 0) newS = ['四季'];
+        next[index].season = newS;
+      }
+      return next;
+    });
+  };
+
+  const removeBatchItem = (index) => {
+    setBatchItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const addCustomCategory = () => {
+    const cat = prompt('请输入新分类名称：');
+    if (cat && cat.trim() && !categories.includes(cat.trim())) {
+      setCategories([...categories, cat.trim()]);
     }
-    let next = current.includes(s) ? current.filter(x => x !== s) : [...current.filter(x => x !== '四季'), s];
-    if (next.length === 0) next = ['四季'];
-    setFormItem({ ...formItem, season: next });
   };
 
   const openAddModal = () => {
     setIsEditing(false);
-    setFormItem({ category: lastCategory, season: lastSeason, images: [], price: '', link: '' });
+    setBatchItems([]);
+    setLinkInput('');
     setShowAdd(true);
   };
 
   const openEditModal = (item) => {
     setIsEditing(true);
-    setEditingId(item.id);
-    setFormItem({
-      category: item.category,
-      season: item.season || ['四季'],
-      images: [item.image],
-      price: item.price || '',
-      link: item.link || ''
-    });
+    setBatchItems([{ ...item }]);
     setShowAdd(true);
   };
 
   const handleSaveItem = () => {
-    if (!formItem.images || formItem.images.length === 0) {
-      alert('请上传或解析至少一张图片');
+    const validItems = batchItems.filter(i => i.image);
+    if (validItems.length === 0) {
+      alert('请确保至少有一件带有图片的衣物');
       return;
     }
     
-    // Save last used options
-    setLastCategory(formItem.category);
-    setLastSeason(formItem.season);
+    // update memory
+    const last = validItems[validItems.length - 1];
+    setLastCategory(last.category);
+    setLastSeason(last.season);
 
     if (isEditing) {
-      setItems(items.map(i => i.id === editingId ? { 
-        ...i, 
-        category: formItem.category,
-        season: formItem.season,
-        price: formItem.price,
-        link: formItem.link,
-        image: formItem.images[0] 
-      } : i));
+      const edited = validItems[0];
+      setItems(items.map(i => i.id === edited.id ? edited : i));
     } else {
-      // Batch add items
-      const newItems = formItem.images.map((img, idx) => ({
-        id: Date.now() + idx,
-        category: formItem.category,
-        season: formItem.season,
-        price: formItem.price,
-        link: formItem.link,
-        image: img
-      }));
+      const newItems = validItems.map(i => ({ ...i, id: i.id || Date.now() + Math.random() }));
       setItems([...newItems, ...items]);
     }
     setShowAdd(false);
@@ -213,14 +213,15 @@ export default function Wardrobe() {
 
   const deleteItem = () => {
     if (confirm('确定要删除这件衣物吗？')) {
-      const newItems = items.filter(i => i.id !== editingId);
-      setItems(newItems);
+      const editingId = batchItems[0].id;
+      setItems(items.filter(i => i.id !== editingId));
       setShowAdd(false);
     }
   };
 
+  // Outfit Logic
   const generateOutfit = () => {
-    const tops = items.filter(i => i.category === '上衣');
+    const tops = items.filter(i => ['上衣', '外套'].includes(i.category) || !['下装', '鞋子', '配饰', '连衣裙'].includes(i.category));
     const bottoms = items.filter(i => i.category === '下装');
     const shoes = items.filter(i => i.category === '鞋子');
     const dresses = items.filter(i => i.category === '连衣裙');
@@ -228,7 +229,6 @@ export default function Wardrobe() {
 
     const useDress = dresses.length > 0 && (tops.length === 0 || bottoms.length === 0 || Math.random() > 0.5);
 
-    // 80% rule
     const strictSeason = Math.random() < 0.8;
     let targetSeason = '四季';
 
@@ -274,8 +274,51 @@ export default function Wardrobe() {
     setOutfit({ top, bottom, shoes: shoe, accessory: acc });
   };
 
-  const groupedItems = CATEGORIES.reduce((acc, cat) => {
+  const handleSaveOutfit = () => {
+    if (!outfit.top && !outfit.bottom && !outfit.shoes) {
+      alert('请先搭配衣服');
+      return;
+    }
+    setShowSaveOutfit(true);
+  };
+
+  const confirmSaveOutfit = () => {
+    const newOutfit = {
+      id: Date.now(),
+      season: outfitSeason,
+      items: [outfit.top, outfit.bottom, outfit.shoes, outfit.accessory].filter(Boolean)
+    };
+    setSavedOutfits([newOutfit, ...savedOutfits]);
+    setShowSaveOutfit(false);
+    alert('保存成功！');
+  };
+
+  const deleteSavedOutfit = (id) => {
+    if (confirm('确定删除这个搭配吗？')) {
+      setSavedOutfits(savedOutfits.filter(o => o.id !== id));
+    }
+  };
+
+  // Picker Logic
+  const getPickerItems = () => {
+    if (!showPicker) return [];
+    if (showPicker === 'shoes') return items.filter(i => i.category === '鞋子');
+    if (showPicker === 'accessory') return items.filter(i => i.category === '配饰');
+    if (showPicker === 'bottom') return items.filter(i => i.category === '下装');
+    // top slot: show tops, dresses, outerwear, or uncategorized
+    return items.filter(i => !['下装', '鞋子', '配饰'].includes(i.category));
+  };
+
+  const groupedItems = categories.reduce((acc, cat) => {
     acc[cat] = items.filter(i => i.category === cat);
+    return acc;
+  }, {});
+  // Add an "Other" category for deleted categories
+  const otherItems = items.filter(i => !categories.includes(i.category));
+  if (otherItems.length > 0) groupedItems['其它'] = otherItems;
+
+  const groupedSavedOutfits = SEASONS.reduce((acc, s) => {
+    acc[s] = savedOutfits.filter(o => o.season === s);
     return acc;
   }, {});
 
@@ -303,6 +346,12 @@ export default function Wardrobe() {
         >
           穿搭生成器
         </button>
+        <button 
+          className={`${styles.tabBtn} ${activeTab === 'saved' ? styles.active : ''}`}
+          onClick={() => setActiveTab('saved')}
+        >
+          我的穿搭
+        </button>
       </div>
 
       {activeTab === 'manage' && (
@@ -312,7 +361,7 @@ export default function Wardrobe() {
           </div>
 
           <div className={styles.categoryGroups}>
-            {CATEGORIES.map(cat => {
+            {Object.keys(groupedItems).map(cat => {
               const catItems = groupedItems[cat];
               if (catItems.length === 0) return null;
               return (
@@ -345,141 +394,228 @@ export default function Wardrobe() {
 
       {activeTab === 'outfit' && (
         <div className={styles.outfitSection}>
-          <button className={styles.generateBtn} onClick={generateOutfit}>
-            🎲 随机生成穿搭
-          </button>
+          <div className={styles.outfitControls}>
+            <button className={styles.generateBtn} onClick={generateOutfit}>
+              🎲 随机生成穿搭
+            </button>
+            <button className={styles.saveOutfitBtn} onClick={handleSaveOutfit}>
+              ❤️ 保存此穿搭
+            </button>
+          </div>
+          <p className={styles.hintText}>提示：点击对应部位可手动更换衣物</p>
           
           <div className={styles.outfitDisplay}>
-            {outfit.top || outfit.bottom || outfit.shoes || outfit.accessory ? (
-              <div className={styles.outfitGridDisplay}>
-                <div className={styles.outfitMainCol}>
-                  {outfit.top && (
-                    <div className={styles.outfitItem}>
+            <div className={styles.outfitGridDisplay}>
+              <div className={styles.outfitMainCol}>
+                <div className={styles.slotBox} onClick={() => setShowPicker('top')}>
+                  {outfit.top ? (
+                    <>
                       <img src={outfit.top.image} alt="Top" />
-                      <span className={styles.outfitLabel}>{outfit.top.category}</span>
-                    </div>
-                  )}
-                  {outfit.bottom && (
-                    <div className={styles.outfitItem}>
-                      <img src={outfit.bottom.image} alt="Bottom" />
-                      <span className={styles.outfitLabel}>{outfit.bottom.category}</span>
-                    </div>
-                  )}
+                      <button className={styles.clearSlotBtn} onClick={(e) => { e.stopPropagation(); setOutfit({...outfit, top: null})}}>×</button>
+                    </>
+                  ) : <div className={styles.slotPlaceholder}>+ 上衣/连衣裙</div>}
                 </div>
-                <div className={styles.outfitSideCol}>
-                  {outfit.accessory && (
-                    <div className={styles.outfitItem}>
-                      <img src={outfit.accessory.image} alt="Accessory" />
-                      <span className={styles.outfitLabel}>{outfit.accessory.category}</span>
-                    </div>
-                  )}
-                  {outfit.shoes && (
-                    <div className={styles.outfitItem}>
-                      <img src={outfit.shoes.image} alt="Shoes" />
-                      <span className={styles.outfitLabel}>{outfit.shoes.category}</span>
-                    </div>
-                  )}
+                <div className={styles.slotBox} onClick={() => setShowPicker('bottom')}>
+                  {outfit.bottom ? (
+                    <>
+                      <img src={outfit.bottom.image} alt="Bottom" />
+                      <button className={styles.clearSlotBtn} onClick={(e) => { e.stopPropagation(); setOutfit({...outfit, bottom: null})}}>×</button>
+                    </>
+                  ) : <div className={styles.slotPlaceholder}>+ 下装</div>}
                 </div>
               </div>
-            ) : (
-              <div className={styles.emptyOutfit}>点击上方按钮生成今日穿搭</div>
-            )}
+              <div className={styles.outfitSideCol}>
+                <div className={styles.slotBox} onClick={() => setShowPicker('accessory')}>
+                  {outfit.accessory ? (
+                    <>
+                      <img src={outfit.accessory.image} alt="Accessory" />
+                      <button className={styles.clearSlotBtn} onClick={(e) => { e.stopPropagation(); setOutfit({...outfit, accessory: null})}}>×</button>
+                    </>
+                  ) : <div className={styles.slotPlaceholder}>+ 配饰</div>}
+                </div>
+                <div className={styles.slotBox} onClick={() => setShowPicker('shoes')}>
+                  {outfit.shoes ? (
+                    <>
+                      <img src={outfit.shoes.image} alt="Shoes" />
+                      <button className={styles.clearSlotBtn} onClick={(e) => { e.stopPropagation(); setOutfit({...outfit, shoes: null})}}>×</button>
+                    </>
+                  ) : <div className={styles.slotPlaceholder}>+ 鞋子</div>}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Add / Edit Modal */}
-      {showAdd && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <h2 className={styles.modalTitle}>{isEditing ? '编辑衣物' : '添加新衣物'}</h2>
-            
-            <div className={styles.formGroup}>
-              <label>上传图片 {isEditing ? '' : '(可多选)'}</label>
-              <div className={styles.uploadBox}>
-                <label className={styles.uploadLabel}>
-                  <input type="file" multiple={!isEditing} accept="image/*" onChange={handleImageUpload} hidden />
-                  <div className={styles.uploadPlaceholder}>
-                    <span>📸 点击选择或拖拽图片</span>
-                  </div>
-                </label>
-              </div>
-              {formItem.images && formItem.images.length > 0 && (
-                <div className={styles.previewGrid}>
-                  {formItem.images.map((img, idx) => (
-                    <div key={idx} className={styles.previewItem}>
-                      <img src={img} className={styles.previewImg} alt="预览" />
-                      {!isEditing && (
-                        <button type="button" className={styles.removeImgBtn} onClick={() => removeStagedImage(idx)}>×</button>
-                      )}
+      {activeTab === 'saved' && (
+        <div className={styles.savedSection}>
+          {SEASONS.map(s => {
+            const seasonOutfits = groupedSavedOutfits[s];
+            if (!seasonOutfits || seasonOutfits.length === 0) return null;
+            return (
+              <div key={s} className={styles.categoryGroup}>
+                <h3 className={styles.categoryTitle}>{s}季穿搭 <span>{seasonOutfits.length}套</span></h3>
+                <div className={styles.outfitList}>
+                  {seasonOutfits.map(outfit => (
+                    <div key={outfit.id} className={styles.savedOutfitCard}>
+                      <button className={styles.deleteOutfitBtn} onClick={() => deleteSavedOutfit(outfit.id)}>×</button>
+                      <div className={styles.savedOutfitImages}>
+                        {outfit.items.map((item, idx) => (
+                          <img key={idx} src={item.image} alt="outfit item" className={styles.savedOutfitImg} />
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
+              </div>
+            );
+          })}
+          {savedOutfits.length === 0 && (
+            <div className={styles.empty}>还没有保存的穿搭哦</div>
+          )}
+        </div>
+      )}
+
+      {/* Item Picker Modal */}
+      {showPicker && (
+        <div className={styles.modalOverlay} onClick={() => setShowPicker(null)}>
+          <div className={styles.pickerModal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>选择衣物</h3>
+            <div className={styles.pickerGrid}>
+              {getPickerItems().map(item => (
+                <div key={item.id} className={styles.pickerItem} onClick={() => {
+                  setOutfit({ ...outfit, [showPicker]: item });
+                  setShowPicker(null);
+                }}>
+                  <img src={item.image} alt="" />
+                </div>
+              ))}
+              {getPickerItems().length === 0 && <div className={styles.empty}>该分类下没有衣物</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save Outfit Modal */}
+      {showSaveOutfit && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <h3 className={styles.modalTitle}>保存穿搭</h3>
+            <div className={styles.formGroup}>
+              <label>选择适用季节</label>
+              <select value={outfitSeason} onChange={e => setOutfitSeason(e.target.value)}>
+                {SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div className={styles.modalActions}>
+              <button className={styles.cancelBtn} onClick={() => setShowSaveOutfit(false)}>取消</button>
+              <button className={styles.confirmBtn} onClick={confirmSaveOutfit}>保存</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Items Modal */}
+      {showAdd && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalLarge}>
+            <h2 className={styles.modalTitle}>{isEditing ? '编辑衣物' : '添加新衣物 (支持多张)'}</h2>
+            
+            {!isEditing && (
+              <div className={styles.uploadToolbar}>
+                <label className={styles.uploadLabelBtn}>
+                  📸 批量上传图片
+                  <input type="file" multiple accept="image/*" onChange={handleImageUpload} hidden />
+                </label>
+                <div className={styles.linkInputWrap}>
+                  <input 
+                    type="text" 
+                    placeholder="或粘贴商品链接自动解析" 
+                    value={linkInput}
+                    onChange={e => setLinkInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleParseLink()}
+                  />
+                  <button onClick={handleParseLink} disabled={parsing}>
+                    {parsing ? '...' : '解析'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div className={styles.batchList}>
+              {batchItems.map((formItem, idx) => (
+                <div key={formItem.id} className={styles.batchCard}>
+                  <div className={styles.batchImgWrap}>
+                    {formItem.image ? (
+                      <img src={formItem.image} alt="预览" />
+                    ) : (
+                      <label className={styles.placeholderImg}>
+                        + 点击上传
+                        <input type="file" accept="image/*" onChange={e => handleImageUpload(e, idx)} hidden />
+                      </label>
+                    )}
+                    {!isEditing && <button className={styles.removeBatchBtn} onClick={() => removeBatchItem(idx)}>×</button>}
+                  </div>
+                  <div className={styles.batchForm}>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label>
+                          分类 
+                          <button className={styles.textBtn} onClick={addCustomCategory}>+新分类</button>
+                        </label>
+                        <select value={formItem.category} onChange={e => updateBatchItem(idx, 'category', e.target.value)}>
+                          {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label>价格 (¥)</label>
+                        <input 
+                          type="number" 
+                          value={formItem.price}
+                          onChange={e => updateBatchItem(idx, 'price', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>商品链接</label>
+                      <input 
+                        type="text" 
+                        value={formItem.link}
+                        onChange={e => updateBatchItem(idx, 'link', e.target.value)}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>季节</label>
+                      <div className={styles.seasonRow}>
+                        {SEASONS.map(s => (
+                          <button 
+                            key={s} type="button"
+                            className={`${styles.seasonBtn} ${(formItem.season || []).includes(s) ? styles.seasonActive : ''}`}
+                            onClick={() => toggleBatchSeason(idx, s)}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {batchItems.length === 0 && !isEditing && (
+                <div className={styles.emptyBatch}>请上传图片或解析链接开始添加</div>
               )}
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>商品链接 (可选)</label>
-              <div className={styles.linkInputWrap}>
-                <input 
-                  type="text" 
-                  placeholder="填入链接可尝试自动推断" 
-                  value={formItem.link}
-                  onChange={e => setFormItem({...formItem, link: e.target.value})}
-                  onBlur={handleLinkBlur}
-                />
-                {parsing && <span className={styles.parsingIndicator}>解析中...</span>}
-              </div>
-            </div>
-
-            <div className={styles.formRow}>
-              <div className={styles.formGroup}>
-                <label>分类</label>
-                <select value={formItem.category} onChange={e => setFormItem({...formItem, category: e.target.value})}>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              
-              <div className={styles.formGroup}>
-                <label>价格 (¥)</label>
-                <input 
-                  type="number" 
-                  placeholder="例如: 199" 
-                  value={formItem.price}
-                  onChange={e => setFormItem({...formItem, price: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>适用季节 (多选)</label>
-              <div className={styles.seasonRow}>
-                {SEASONS.map(s => {
-                  const isActive = (formItem.season || []).includes(s);
-                  return (
-                    <button 
-                      key={s}
-                      type="button"
-                      className={`${styles.seasonBtn} ${isActive ? styles.seasonActive : ''}`}
-                      onClick={() => toggleSeason(s)}
-                    >
-                      {s}
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             <div className={styles.modalActions}>
               <div className={styles.leftAction}>
                 {isEditing && (
-                  <button className={styles.deleteFormBtn} onClick={deleteItem}>删除</button>
+                  <button className={styles.deleteFormBtn} onClick={deleteItem}>删除此衣物</button>
                 )}
               </div>
               <div className={styles.rightActions}>
                 <button className={styles.cancelBtn} onClick={() => setShowAdd(false)}>取消</button>
                 <button className={styles.confirmBtn} onClick={handleSaveItem}>
-                  {isEditing ? '保存修改' : '确定添加'}
+                  {isEditing ? '保存修改' : `确定添加 (${batchItems.filter(i=>i.image).length})`}
                 </button>
               </div>
             </div>

@@ -29,6 +29,7 @@
   margin-bottom: 2rem;
   border-bottom: 1px solid #eee;
   padding-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .tabBtn {
@@ -162,20 +163,41 @@
   text-align: center;
 }
 
+.outfitControls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
 .generateBtn {
   background: #8e44ad;
   color: #fff;
   border: none;
-  padding: 0.8rem 2rem;
-  font-size: 1.1rem;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.05rem;
   border-radius: 30px;
   cursor: pointer;
-  margin-bottom: 2rem;
   transition: transform 0.2s;
 }
+.generateBtn:hover { transform: scale(1.03); }
 
-.generateBtn:hover {
-  transform: scale(1.05);
+.saveOutfitBtn {
+  background: #ff6b81;
+  color: #fff;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-size: 1.05rem;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.saveOutfitBtn:hover { transform: scale(1.03); }
+
+.hintText {
+  font-size: 0.85rem;
+  color: #bdc3c7;
+  margin-bottom: 2rem;
 }
 
 .outfitDisplay {
@@ -203,34 +225,100 @@
   gap: 1.5rem;
 }
 
-.outfitItem {
+.slotBox {
+  width: 160px;
+  height: 160px;
+  background: #fdfbf7;
+  border-radius: 12px;
+  border: 2px dashed #e2e2e2;
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.slotBox:hover {
+  border-color: #bdc3c7;
+}
+
+.slotBox img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 0.5rem;
+  border-radius: 12px;
+}
+
+.slotPlaceholder {
+  color: #bdc3c7;
+  font-size: 0.9rem;
+}
+
+.clearSlotBtn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Saved Outfits */
+.outfitList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.savedOutfitCard {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  position: relative;
+}
+
+.deleteOutfitBtn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.savedOutfitCard:hover .deleteOutfitBtn { opacity: 1; }
+
+.savedOutfitImages {
+  display: flex;
   gap: 0.5rem;
 }
 
-.outfitItem img {
-  width: 160px;
-  height: 160px;
+.savedOutfitImg {
+  width: 80px;
+  height: 80px;
   object-fit: contain;
-  background: #fdfbf7;
-  border-radius: 12px;
-  padding: 0.5rem;
+  background: #fcfcfc;
+  border-radius: 8px;
   border: 1px solid #eee;
 }
 
-.outfitLabel {
-  font-size: 0.85rem;
-  color: #95a5a6;
-}
-
-.emptyOutfit {
-  color: #bdc3c7;
-  font-size: 1.1rem;
-}
-
-/* Modal */
+/* Modals */
 .modalOverlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -239,16 +327,26 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem;
 }
 
 .modal {
   background: #fff;
   padding: 2rem;
   border-radius: 16px;
-  width: 90%;
-  max-width: 420px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.modalLarge {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .modalTitle {
@@ -258,26 +356,155 @@
   text-align: center;
 }
 
-.formGroup {
-  margin-bottom: 1rem;
+/* Add/Edit Toolbar */
+.uploadToolbar {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.formGroup label {
+.uploadLabelBtn {
+  background: #e8f4f8;
+  color: #2980b9;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  border: 1px solid #bce0fd;
+}
+
+.linkInputWrap {
+  flex: 1;
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 200px;
+}
+
+.linkInputWrap input {
+  flex: 1;
+  border: none;
+  padding: 0.6rem;
+  outline: none;
   font-size: 0.9rem;
-  color: #34495e;
+}
+
+.linkInputWrap button {
+  background: #f0f0f0;
+  border: none;
+  padding: 0 1rem;
+  cursor: pointer;
+  color: #555;
   font-weight: 500;
 }
 
-.formGroup input[type="text"],
-.formGroup input[type="number"],
+/* Batch List */
+.batchList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-right: 0.5rem;
+}
+
+.emptyBatch {
+  text-align: center;
+  color: #bdc3c7;
+  padding: 3rem 0;
+}
+
+.batchCard {
+  display: flex;
+  gap: 1.5rem;
+  background: #fdfbf7;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #f0eee9;
+}
+
+.batchImgWrap {
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.batchImgWrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #eee;
+}
+
+.placeholderImg {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  color: #aaa;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.removeBatchBtn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.batchForm {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.formGroup label {
+  font-size: 0.85rem;
+  color: #555;
+  display: flex;
+  justify-content: space-between;
+}
+
+.textBtn {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.formGroup input,
 .formGroup select {
-  padding: 0.6rem;
+  padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 6px;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .formRow {
@@ -285,25 +512,20 @@
   gap: 1rem;
 }
 
-.formRow .formGroup {
-  flex: 1;
-}
-
 .seasonRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .seasonBtn {
-  background: #f5f5f5;
+  background: #fff;
   border: 1px solid #ddd;
-  padding: 0.4rem 0.8rem;
+  padding: 0.3rem 0.6rem;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #666;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
 .seasonBtn.seasonActive {
@@ -312,93 +534,12 @@
   border-color: #3498db;
 }
 
-.uploadBox {
-  margin-top: 0.2rem;
-}
-
-.uploadLabel {
-  display: block;
-  cursor: pointer;
-}
-
-.uploadPlaceholder {
-  border: 2px dashed #dcdde1;
-  background: #fdfbf7;
-  border-radius: 8px;
-  padding: 1.5rem;
-  text-align: center;
-  color: #7f8c8d;
-  font-size: 0.95rem;
-  transition: all 0.2s;
-}
-
-.uploadPlaceholder:hover {
-  background: #f4f6f7;
-  border-color: #bdc3c7;
-}
-
-.previewGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.previewItem {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-}
-
-.previewImg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: #fcfcfc;
-  border-radius: 8px;
-  border: 1px solid #eee;
-}
-
-.removeImgBtn {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(231, 76, 60, 0.9);
-  color: white;
-  border: none;
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.linkInputWrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.linkInputWrap input {
-  width: 100%;
-}
-
-.parsingIndicator {
-  position: absolute;
-  right: 10px;
-  font-size: 0.8rem;
-  color: #f39c12;
-  font-weight: 500;
-}
-
 .modalActions {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: 2rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #eee;
 }
 
 .rightActions {
@@ -413,18 +554,39 @@
   font-size: 0.95rem;
   cursor: pointer;
 }
+.cancelBtn { background: #ecf0f1; color: #7f8c8d; }
+.confirmBtn { background: #2c3e50; color: #fff; }
+.deleteFormBtn { background: #e74c3c; color: #fff; }
 
-.cancelBtn {
-  background: #ecf0f1;
-  color: #7f8c8d;
+/* Picker Modal */
+.pickerModal {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
-.confirmBtn {
-  background: #2c3e50;
-  color: #fff;
+.pickerGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
 }
 
-.deleteFormBtn {
-  background: #e74c3c;
-  color: #fff;
+.pickerItem {
+  aspect-ratio: 1;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.pickerItem:hover { transform: scale(1.05); border-color: #bdc3c7; }
+.pickerItem img { width: 100%; height: 100%; object-fit: contain; }
+
+@media (max-width: 600px) {
+  .batchCard { flex-direction: column; }
+  .batchImgWrap { width: 100%; height: 200px; }
 }
