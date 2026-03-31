@@ -7,11 +7,9 @@ export default function Navigation() {
   const router = useRouter();
   const navItems = [
     { href: '/answer-book', label: '答案之书' },
-    { href: '/fortune', label: '算命' },
     { href: '/stock', label: '炒股' },
     { href: '/valentine', label: '塔罗牌' },
     { href: '/realtime', label: '实时交互' },
-    { href: '/todo', label: 'To-Do' },
     { href: '/wardrobe', label: '电子衣橱' },
   ];
 

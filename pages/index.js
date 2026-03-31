@@ -8,9 +8,7 @@ const LifeProgress = dynamic(() => import('../components/LifeProgress'), { ssr: 
 
 export default function Home() {
   const modules = [
-    { href: '/todo', title: '📋 Focus List', desc: '任务管理，实时多端同步。' },
     { href: '/answer-book', title: '答案之书', desc: '随机回答，给你一个轻松直觉指引。' },
-    { href: '/fortune', title: '算命', desc: '快速占卜入口，探索当下趋势。' },
     { href: '/stock', title: '炒股', desc: '股票相关工具与信息页。' },
     { href: '/valentine', title: '塔罗牌', desc: '抽取三张塔罗牌并查看解析。' },
     { href: '/realtime', title: '实时交互', desc: '关键词搜图后拖拽到摄像头画面中实时融合。' },
