@@ -9,13 +9,18 @@ export default function Wardrobe() {
   const [items, setItems] = useState([]);
   const [activeTab, setActiveTab] = useState('manage'); // 'manage' | 'outfit'
 
+  const [lastCategory, setLastCategory] = useState('上衣');
+  const [lastSeason, setLastSeason] = useState(['四季']);
+
   // Modal state
   const [showAdd, setShowAdd] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [parsing, setParsing] = useState(false);
   
   // newItem matches editingItem
-  const defaultItem = { category: '上衣', season: ['四季'], image: '', price: '', link: '' };
+  // For batch add, images is an array. For editing, it's just one image.
+  const defaultItem = { category: lastCategory, season: lastSeason, images: [], price: '', link: '' };
   const [formItem, setFormItem] = useState(defaultItem);
 
   // Outfit state
@@ -55,42 +60,91 @@ export default function Wardrobe() {
     }
   }, [items]);
 
-  // Handle image upload and compress
+  // Handle image upload and compress (supports multiple)
   const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 400;
-        const scaleSize = MAX_WIDTH / img.width;
-        canvas.width = MAX_WIDTH;
-        canvas.height = img.height * scaleSize;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-        setFormItem({ ...formItem, image: dataUrl });
+    let loadedCount = 0;
+    const newImages = [];
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          const scaleSize = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleSize;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          newImages.push(canvas.toDataURL('image/jpeg', 0.7));
+          loadedCount++;
+          if (loadedCount === files.length) {
+            setFormItem(prev => {
+              if (isEditing) {
+                // Keep only the last selected image if editing
+                return { ...prev, images: [newImages[newImages.length - 1]] };
+              }
+              // Batch add appends images
+              return { ...prev, images: [...prev.images, ...newImages] };
+            });
+          }
+        };
+        img.src = event.target.result;
       };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
+      reader.readAsDataURL(file);
+    });
   };
 
-  const handleLinkBlur = () => {
-    const link = formItem.link.toLowerCase();
+  const removeStagedImage = (index) => {
+    setFormItem(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleLinkBlur = async () => {
+    const link = formItem.link?.trim().toLowerCase();
     if (!link) return;
     
+    // Guess category from URL quickly
     let guessedCat = formItem.category;
     if (link.includes('dress') || link.includes('裙')) guessedCat = '连衣裙';
-    else if (link.includes('shoe') || link.includes('鞋')) guessedCat = '鞋子';
-    else if (link.includes('pant') || link.includes('裤') || link.includes('skirt')) guessedCat = '下装';
-    else if (link.includes('shirt') || link.includes('衣')) guessedCat = '上衣';
+    else if (link.includes('shoe') || link.includes('鞋') || link.includes('sneaker') || link.includes('boot')) guessedCat = '鞋子';
+    else if (link.includes('pant') || link.includes('裤') || link.includes('skirt') || link.includes('jean')) guessedCat = '下装';
+    else if (link.includes('shirt') || link.includes('衣') || link.includes('top') || link.includes('jacket')) guessedCat = '上衣';
     else if (link.includes('ring') || link.includes('饰') || link.includes('hat') || link.includes('帽') || link.includes('bag') || link.includes('包')) guessedCat = '配饰';
     
-    setFormItem({ ...formItem, category: guessedCat });
+    setFormItem(prev => ({ ...prev, category: guessedCat }));
+
+    // Try to auto-parse remote link
+    if (!link.startsWith('http')) return;
+    setParsing(true);
+    try {
+      const res = await fetch(`/api/parse-link?url=${encodeURIComponent(link)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setFormItem(prev => {
+          let updates = {};
+          if (data.image && !prev.images.length) {
+            // We use the remote image URL or download it. For simplicity, store the URL.
+            updates.images = [data.image];
+          }
+          if (data.price && !prev.price) updates.price = data.price;
+          if (data.season && data.season.length > 0 && prev.season.length === 1 && prev.season[0] === '四季') {
+            updates.season = data.season;
+          }
+          return { ...prev, ...updates };
+        });
+      }
+    } catch (e) {
+      console.error('Parse error', e);
+    } finally {
+      setParsing(false);
+    }
   };
 
   const toggleSeason = (s) => {
@@ -106,7 +160,7 @@ export default function Wardrobe() {
 
   const openAddModal = () => {
     setIsEditing(false);
-    setFormItem(defaultItem);
+    setFormItem({ category: lastCategory, season: lastSeason, images: [], price: '', link: '' });
     setShowAdd(true);
   };
 
@@ -116,7 +170,7 @@ export default function Wardrobe() {
     setFormItem({
       category: item.category,
       season: item.season || ['四季'],
-      image: item.image,
+      images: [item.image],
       price: item.price || '',
       link: item.link || ''
     });
@@ -124,15 +178,35 @@ export default function Wardrobe() {
   };
 
   const handleSaveItem = () => {
-    if (!formItem.image) {
-      alert('请上传一张衣服的图片');
+    if (!formItem.images || formItem.images.length === 0) {
+      alert('请上传或解析至少一张图片');
       return;
     }
+    
+    // Save last used options
+    setLastCategory(formItem.category);
+    setLastSeason(formItem.season);
+
     if (isEditing) {
-      setItems(items.map(i => i.id === editingId ? { ...i, ...formItem } : i));
+      setItems(items.map(i => i.id === editingId ? { 
+        ...i, 
+        category: formItem.category,
+        season: formItem.season,
+        price: formItem.price,
+        link: formItem.link,
+        image: formItem.images[0] 
+      } : i));
     } else {
-      const item = { ...formItem, id: Date.now() };
-      setItems([item, ...items]);
+      // Batch add items
+      const newItems = formItem.images.map((img, idx) => ({
+        id: Date.now() + idx,
+        category: formItem.category,
+        season: formItem.season,
+        price: formItem.price,
+        link: formItem.link,
+        image: img
+      }));
+      setItems([...newItems, ...items]);
     }
     setShowAdd(false);
   };
@@ -154,20 +228,47 @@ export default function Wardrobe() {
 
     const useDress = dresses.length > 0 && (tops.length === 0 || bottoms.length === 0 || Math.random() > 0.5);
 
+    // 80% rule
+    const strictSeason = Math.random() < 0.8;
+    let targetSeason = '四季';
+
     let top = null, bottom = null;
     if (useDress) {
       top = dresses[Math.floor(Math.random() * dresses.length)];
+      if (top.season && top.season[0]) targetSeason = top.season[0];
     } else {
-      if (tops.length > 0) top = tops[Math.floor(Math.random() * tops.length)];
-      if (bottoms.length > 0) bottom = bottoms[Math.floor(Math.random() * bottoms.length)];
+      if (tops.length > 0) {
+        top = tops[Math.floor(Math.random() * tops.length)];
+        if (top.season && top.season[0]) targetSeason = top.season[0];
+      }
+      if (bottoms.length > 0) {
+        let validBottoms = bottoms;
+        if (strictSeason && targetSeason !== '四季') {
+          validBottoms = bottoms.filter(i => i.season.includes(targetSeason) || i.season.includes('四季'));
+          if (validBottoms.length === 0) validBottoms = bottoms;
+        }
+        bottom = validBottoms[Math.floor(Math.random() * validBottoms.length)];
+      }
     }
 
     let shoe = null;
-    if (shoes.length > 0) shoe = shoes[Math.floor(Math.random() * shoes.length)];
+    if (shoes.length > 0) {
+      let validShoes = shoes;
+      if (strictSeason && targetSeason !== '四季') {
+        validShoes = shoes.filter(i => i.season.includes(targetSeason) || i.season.includes('四季'));
+        if (validShoes.length === 0) validShoes = shoes;
+      }
+      shoe = validShoes[Math.floor(Math.random() * validShoes.length)];
+    }
 
     let acc = null;
     if (accessories.length > 0 && Math.random() > 0.3) {
-      acc = accessories[Math.floor(Math.random() * accessories.length)];
+      let validAcc = accessories;
+      if (strictSeason && targetSeason !== '四季') {
+        validAcc = accessories.filter(i => i.season.includes(targetSeason) || i.season.includes('四季'));
+        if (validAcc.length === 0) validAcc = accessories;
+      }
+      acc = validAcc[Math.floor(Math.random() * validAcc.length)];
     }
 
     setOutfit({ top, bottom, shoes: shoe, accessory: acc });
@@ -294,20 +395,41 @@ export default function Wardrobe() {
             <h2 className={styles.modalTitle}>{isEditing ? '编辑衣物' : '添加新衣物'}</h2>
             
             <div className={styles.formGroup}>
-              <label>上传图片</label>
-              <input type="file" accept="image/*" onChange={handleImageUpload} />
-              {formItem.image && <img src={formItem.image} className={styles.previewImg} alt="预览" />}
+              <label>上传图片 {isEditing ? '' : '(可多选)'}</label>
+              <div className={styles.uploadBox}>
+                <label className={styles.uploadLabel}>
+                  <input type="file" multiple={!isEditing} accept="image/*" onChange={handleImageUpload} hidden />
+                  <div className={styles.uploadPlaceholder}>
+                    <span>📸 点击选择或拖拽图片</span>
+                  </div>
+                </label>
+              </div>
+              {formItem.images && formItem.images.length > 0 && (
+                <div className={styles.previewGrid}>
+                  {formItem.images.map((img, idx) => (
+                    <div key={idx} className={styles.previewItem}>
+                      <img src={img} className={styles.previewImg} alt="预览" />
+                      {!isEditing && (
+                        <button type="button" className={styles.removeImgBtn} onClick={() => removeStagedImage(idx)}>×</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className={styles.formGroup}>
               <label>商品链接 (可选)</label>
-              <input 
-                type="text" 
-                placeholder="填入链接可尝试自动推断分类" 
-                value={formItem.link}
-                onChange={e => setFormItem({...formItem, link: e.target.value})}
-                onBlur={handleLinkBlur}
-              />
+              <div className={styles.linkInputWrap}>
+                <input 
+                  type="text" 
+                  placeholder="填入链接可尝试自动推断" 
+                  value={formItem.link}
+                  onChange={e => setFormItem({...formItem, link: e.target.value})}
+                  onBlur={handleLinkBlur}
+                />
+                {parsing && <span className={styles.parsingIndicator}>解析中...</span>}
+              </div>
             </div>
 
             <div className={styles.formRow}>
