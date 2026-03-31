@@ -1,10 +1,10 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   height: 100%;
   background: #faf9f6;
-  padding: 1.5rem 2.5rem 2rem;
+  padding: 3rem 2.5rem 2rem;
   font-family: 'Noto Sans SC', 'Inter', sans-serif;
   color: #2a2a2a;
 }

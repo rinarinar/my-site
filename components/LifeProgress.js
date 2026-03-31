@@ -119,13 +119,13 @@ export default function LifeProgress() {
     ? new Date(lastSaved)
     : null;
 
-  const months = [];
-  for (let i = 0; i < clock.totalMonths; i++) {
-    months.push(i);
-  }
-  // Roughly 1200 months for 100 years. If we want around 1200 items in a good aspect ratio, maybe 30 cols or 40 cols
   const cols = 40;
-  const rows = Math.ceil(clock.totalMonths / cols);
+  const rows = 30;
+  const totalSquares = cols * rows; // 1200
+  const squares = [];
+  for (let i = 0; i < totalSquares; i++) {
+    squares.push(i);
+  }
 
   return (
     <div className={styles.wrap}>
@@ -195,11 +195,11 @@ export default function LifeProgress() {
           gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`
         }}
       >
-        {months.map((i) => {
+        {squares.map((i) => {
           let cls = styles.weekFuture;
           if (i < clock.currentMonthIndex) cls = styles.weekPassed;
           else if (i === clock.currentMonthIndex) cls = styles.weekCurrent;
-          return <div key={i} className={cls} title={`第 ${i + 1} 个月`} />;
+          return <div key={i} className={cls} title={i < clock.totalMonths ? `第 ${i + 1} 个月` : ''} />;
         })}
       </div>
     </div>
