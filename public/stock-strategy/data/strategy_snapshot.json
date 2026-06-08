@@ -1,9 +1,9 @@
 {
   "meta": {
     "title": "A 股十年动量策略追踪",
-    "generated_at": "2026-06-08T20:03:38.922247+08:00",
+    "generated_at": "2026-06-09T00:23:01.011814+08:00",
     "timezone": "Asia/Shanghai",
-    "requested_today": "2026-06-08",
+    "requested_today": "2026-06-09",
     "latest_data_date": "2026-06-05",
     "backtest_start": "2016-06-08",
     "lookback_start": "2015-06-08",
