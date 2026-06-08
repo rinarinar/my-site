@@ -8,6 +8,7 @@ export default function Navigation() {
   const navItems = [
     { href: '/answer-book', label: '答案之书' },
     { href: '/stock', label: '炒股' },
+    { href: '/stock-strategy', label: '策略追踪' },
     { href: '/valentine', label: '塔罗牌' },
     { href: '/realtime', label: '实时交互' },
     { href: '/wardrobe', label: '电子衣橱' },

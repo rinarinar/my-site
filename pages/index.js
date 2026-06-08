@@ -10,6 +10,7 @@ export default function Home() {
   const modules = [
     { href: '/answer-book', title: '答案之书', desc: '随机回答，给你一个轻松直觉指引。' },
     { href: '/stock', title: '炒股', desc: '股票相关工具与信息页。' },
+    { href: '/stock-strategy', title: 'A股策略追踪', desc: '月频宽基动量策略，持续追踪十年回测表现。' },
     { href: '/valentine', title: '塔罗牌', desc: '抽取三张塔罗牌并查看解析。' },
     { href: '/realtime', title: '实时交互', desc: '关键词搜图后拖拽到摄像头画面中实时融合。' },
     { href: '/wardrobe', title: '👗 电子衣橱', desc: '管理你的个人衣物与穿搭灵感。' },
