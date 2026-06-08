@@ -317,6 +317,37 @@
         color: var(--ink);
       }
 
+      .summary-band {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .stance {
+        display: grid;
+        gap: 12px;
+      }
+
+      .stance-card {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfd;
+      }
+
+      .stance-card .label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .stance-card .value {
+        margin-top: 6px;
+        font-size: 22px;
+        line-height: 1.05;
+        font-weight: 760;
+      }
+
       .rules {
         display: grid;
         gap: 12px;
@@ -364,6 +395,7 @@
         .status,
         .grid,
         .logic-grid,
+        .summary-band,
         .details {
           grid-template-columns: 1fr;
         }
@@ -419,7 +451,7 @@
       <div class="shell">
         <div class="brand">
           <h1>A 股十年动量策略追踪</h1>
-          <span>月频宽基轮动 / 现金防守</span>
+          <span>研究驱动核心-卫星 / 十年审计</span>
         </div>
         <div class="freshness" id="freshness">加载数据中</div>
       </div>
@@ -506,6 +538,56 @@
             </div>
             <div class="table-wrap">
               <table id="bucketTable"></table>
+            </div>
+          </article>
+        </section>
+
+        <section class="summary-band">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>当前执行层</h2>
+                <p class="subtle">把回测信号转成基金、股票和现金的组合语言。</p>
+              </div>
+            </div>
+            <div id="playbookSummary"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>目标配置</h2>
+                <p class="subtle">权重随市场状态变化，路线保持固定。</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="allocationTable"></table>
+            </div>
+          </article>
+        </section>
+
+        <section class="details">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>基金观察池</h2>
+                <p class="subtle">优先选择低费率、高流动性、风格明确的工具。</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="fundWatchlist"></table>
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>股票观察池</h2>
+                <p class="subtle">不是买入清单，只有通过周度复核才进入持仓。</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="stockWatchlist"></table>
             </div>
           </article>
         </section>
@@ -740,6 +822,86 @@
         `;
       }
 
+      function renderCurrentPlaybook(data) {
+        const playbook = data.current_playbook;
+        document.getElementById("playbookSummary").innerHTML = `
+          <div class="stance">
+            <div class="stance-card">
+              <div class="label">市场状态</div>
+              <div class="value">${escapeHtml(playbook.regime)}</div>
+            </div>
+            <div class="stance-card">
+              <div class="label">权益预算</div>
+              <div class="value">${escapeHtml(playbook.equity_budget)}</div>
+            </div>
+            <p class="policy-copy">${escapeHtml(playbook.stance)}</p>
+            <p class="subtle">${escapeHtml(playbook.historical_audit_note)}</p>
+          </div>
+        `;
+
+        renderTable(
+          document.getElementById("allocationTable"),
+          ["资产", "目标", "当前落地", "调整规则"],
+          [
+            playbook.target_allocations
+              .map(
+                (row) => `
+                  <tr>
+                    <td>${escapeHtml(row.bucket)}</td>
+                    <td>${escapeHtml(row.target)}</td>
+                    <td style="text-align:left;white-space:normal">${escapeHtml(row.implementation)}</td>
+                    <td style="text-align:left;white-space:normal">${escapeHtml(row.adjustment_rule)}</td>
+                  </tr>`
+              )
+              .join(""),
+          ]
+        );
+
+        renderTable(
+          document.getElementById("fundWatchlist"),
+          ["代码", "基金/ETF", "职责", "使用条件"],
+          [
+            playbook.fund_watchlist
+              .map(
+                (row) => `
+                  <tr>
+                    <td>${escapeHtml(row.code)}</td>
+                    <td>${escapeHtml(row.name)}</td>
+                    <td style="text-align:left;white-space:normal">${escapeHtml(row.role)}</td>
+                    <td style="text-align:left;white-space:normal">${escapeHtml(row.use_when)}</td>
+                  </tr>`
+              )
+              .join(""),
+          ]
+        );
+
+        renderTable(
+          document.getElementById("stockWatchlist"),
+          ["代码", "股票", "行业", "需要验证的证据"],
+          [
+            playbook.stock_watchlist
+              .map(
+                (row) => `
+                  <tr>
+                    <td>${escapeHtml(row.code)}</td>
+                    <td>${escapeHtml(row.name)}</td>
+                    <td>${escapeHtml(row.industry)}</td>
+                    <td style="text-align:left;white-space:normal">${escapeHtml(row.evidence_needed)}</td>
+                  </tr>`
+              )
+              .join(""),
+          ]
+        );
+
+        document.getElementById("weeklyRisk").innerHTML = `
+          <ul class="policy-list">
+            <li><strong>每周研究</strong>${data.investment_policy.weekly_research.map(escapeHtml).join(" ")}</li>
+            <li><strong>周度决策</strong>${playbook.weekly_decision_rules.map(escapeHtml).join(" ")}</li>
+            <li><strong>风控纪律</strong>${data.investment_policy.risk_controls.map(escapeHtml).join(" ")}</li>
+          </ul>
+        `;
+      }
+
       function chartSeries(source, name, color) {
         return source.map((point) => ({
           date: point.date,
@@ -857,6 +1019,7 @@
         renderSignalTable(data);
         renderRules(data);
         renderPolicy(data);
+        renderCurrentPlaybook(data);
         renderYearTable(data);
         renderRebalanceTable(data);
         renderNotice(data);
