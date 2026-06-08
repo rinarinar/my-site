@@ -277,6 +277,46 @@
         margin-top: 18px;
       }
 
+      .logic-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .policy-copy {
+        margin: 0;
+        color: #343a40;
+        font-size: 14px;
+        line-height: 1.75;
+      }
+
+      .policy-list {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .policy-list li {
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .policy-list li:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .policy-list strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--ink);
+      }
+
       .rules {
         display: grid;
         gap: 12px;
@@ -323,6 +363,7 @@
       @media (max-width: 980px) {
         .status,
         .grid,
+        .logic-grid,
         .details {
           grid-template-columns: 1fr;
         }
@@ -443,6 +484,52 @@
               <dl class="rules" id="rules"></dl>
             </article>
           </aside>
+        </section>
+
+        <section class="logic-grid">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>完整投资逻辑</h2>
+                <p class="subtle">固定流程，动态仓位，先风控再收益。</p>
+              </div>
+            </div>
+            <div id="policyLogic"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>组合构建</h2>
+                <p class="subtle">指数、基金、股票和现金各有职责。</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table id="bucketTable"></table>
+            </div>
+          </article>
+        </section>
+
+        <section class="details">
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>选股 / 选基</h2>
+                <p class="subtle">只把研究证据能解释的标的放入组合。</p>
+              </div>
+            </div>
+            <div id="selectionRules"></div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>每周研究与风控</h2>
+                <p class="subtle">近期选择随市场证据变化，不靠固定口号。</p>
+              </div>
+            </div>
+            <div id="weeklyRisk"></div>
+          </article>
         </section>
 
         <section class="details">
@@ -601,6 +688,58 @@
           .join("");
       }
 
+      function renderPolicy(data) {
+        const policy = data.investment_policy;
+        document.getElementById("policyLogic").innerHTML = `
+          <p class="policy-copy">${escapeHtml(policy.thesis)}</p>
+          <dl class="rules" style="margin-top: 14px">
+            <div class="rule-row">
+              <dt>固定路线</dt>
+              <dd>${escapeHtml(policy.route.fixed)}</dd>
+            </div>
+            <div class="rule-row">
+              <dt>动态选择</dt>
+              <dd>${escapeHtml(policy.route.dynamic)}</dd>
+            </div>
+            <div class="rule-row">
+              <dt>频率</dt>
+              <dd>${escapeHtml(policy.route.frequency_choice)}</dd>
+            </div>
+          </dl>
+        `;
+
+        renderTable(
+          document.getElementById("bucketTable"),
+          ["仓位", "目标", "职责"],
+          [
+            policy.portfolio_buckets
+              .map(
+                (row) => `
+                  <tr>
+                    <td>${escapeHtml(row.bucket)}</td>
+                    <td>${escapeHtml(row.target)}</td>
+                    <td style="text-align:left;white-space:normal">${escapeHtml(row.role)}</td>
+                  </tr>`
+              )
+              .join(""),
+          ]
+        );
+
+        document.getElementById("selectionRules").innerHTML = `
+          <ul class="policy-list">
+            <li><strong>股票</strong>${policy.selection_rules.stocks.map(escapeHtml).join(" ")}</li>
+            <li><strong>基金</strong>${policy.selection_rules.funds.map(escapeHtml).join(" ")}</li>
+          </ul>
+        `;
+
+        document.getElementById("weeklyRisk").innerHTML = `
+          <ul class="policy-list">
+            <li><strong>每周研究</strong>${policy.weekly_research.map(escapeHtml).join(" ")}</li>
+            <li><strong>风控纪律</strong>${policy.risk_controls.map(escapeHtml).join(" ")}</li>
+          </ul>
+        `;
+      }
+
       function chartSeries(source, name, color) {
         return source.map((point) => ({
           date: point.date,
@@ -717,6 +856,7 @@
         renderCharts(data);
         renderSignalTable(data);
         renderRules(data);
+        renderPolicy(data);
         renderYearTable(data);
         renderRebalanceTable(data);
         renderNotice(data);
